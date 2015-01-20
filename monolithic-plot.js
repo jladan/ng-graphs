@@ -1,94 +1,102 @@
 angular.module('plotting', [])
 // This service is pulled from 
-.factory('d3service', function () {
-    return window.d3;
-})
 .controller('plotdata', function($scope) {
     $scope.w = w;
     $scope.h = h;
     $scope.data = plotData;
 })
-.directive('plot', ['d3service', function (d3service) {
+.directive('plot', ['$window', function ($window) {
     var d3 = window.d3;
+
+    var drawAxes = function (scope) {
+        var xAxis = d3.svg.axis()
+            .scale(scope.xScale)
+            .ticks(5)
+            .orient("bottom");
+        var yAxis = d3.svg.axis()
+            .scale(scope.yScale)
+            .ticks(5)
+            .orient("left");
+
+        // Draw the axes
+        scope.svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (scope.height/2) + ")")
+            .call(xAxis);
+        scope.svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + scope.width/2 + ",0)")
+            .call(yAxis);
+    };
+
+    var render = function(scope) {
+        scope.svg.selectAll('*').remove();
+        var p = scope.padding;
+        var plotData = scope.data || [[-6,-1],[6,1]];
+        var w = scope.width;
+        var h = scope.height;
+
+        // Set up the scales
+        scope.xScale = d3.scale.linear()
+            .domain([-6,6]).range([p,w-p]);
+        scope.yScale = d3.scale.linear()
+            .domain([-1,1]).range([h-p,p]);
+
+        drawAxes(scope);
+
+        // This next bit creates an svg path generator
+        var pathGen = d3.svg.line()
+            .x(function(d) {return scope.xScale(d[0]); })
+            .y(function(d) {return scope.yScale(d[1]); })
+            .interpolate("linear");
+
+        // Now, the plot is actually added to the svg
+        var plot = scope.svg.append("path")
+            .attr("d", pathGen(plotData))
+            .attr("stroke", "blue")
+            .attr("stroke-width", 2)
+            .attr("fill", "none");
+    }
 
     return {
         restrict: 'EA',
         scope: {
-            width: '=',
-            height: '=',
+            options: '=',
             data: '='
         },
         link: function(scope, elm, attrs) {
-            var w = scope.width;
-            var h = scope.height;
-            var p = 30;
-            var svg = d3.select(elm[0])
+
+            // TODO read plot options
+            scope.padding = 30;
+            scope.svg = d3.select(elm[0])
                     .append("svg")
-                    .attr("height", scope.height)
-                    .attr("width", scope.width)
-            var plotData = scope.data || [[-6,-1],[6,1]];
-            // Set up the axes
-            var xScale = d3.scale.linear().domain([-6,6]).range([p,w-p]);
-            var yScale = d3.scale.linear().domain([-1,1]).range([h-p,p]);
+                    .attr("height", '100%')
+                    .attr("width", '100%');
+            
+            scope.width = elm[0].offsetWidth - scope.padding;
+            scope.height = elm[0].offsetHeight - scope.padding;
 
-            var xAxis = d3.svg.axis()
-                .scale(xScale)
-                .ticks(5)
-                .orient("bottom");
-            var yAxis = d3.svg.axis()
-                .scale(yScale)
-                .ticks(5)
-                .orient("left");
+            window.onresize = function () {
+                scope.$apply();
+            };
 
-            // Draw the axes
-            svg.append("g")
-                .attr("class", "axis")
-                .attr("transform", "translate(0," + (h/2) + ")")
-                .call(xAxis);
-            svg.append("g")
-                .attr("class", "axis")
-                .attr("transform", "translate(" + w/2 + ",0)")
-                .call(yAxis);
-
-            // I want a path... so...
-
-            // This next bit creates an svg path generator
-            var pathGen = d3.svg.line()
-                .x(function(d) {return xScale(d[0]); })
-                .y(function(d) {return yScale(d[1]); })
-                .interpolate("linear");
-
-            // Now, the plot is actually added to the svg
-            var plot = svg.append("path")
-                .attr("d", pathGen(plotData))
-                .attr("stroke", "blue")
-                .attr("stroke-width", 2)
-                .attr("fill", "none");
+            scope.$watch(function () {
+                return elm[0].offsetWidth;
+                // return angular.element($window)[0].innerWidth;
+            }, function () {
+                scope.width = elm[0].offsetWidth - scope.padding;
+                scope.height = elm[0].offsetHeight - scope.padding;
+                render(scope);
+            });
+            scope.$watch(function () {
+                return elm[0].offsetHeight;
+            }, function () {
+                scope.width = elm[0].offsetWidth - scope.padding;
+                scope.height = elm[0].offsetHeight - scope.padding;
+                render(scope);
+            });
 
         },
     };
 }])
-.directive('axes', function() {
-    return {
-        require: '^figure',
-        restrict: 'EA',
-        scope: {
-            xRange: '=',
-            yRange: '='
-        },
-        link: function(scope, element, attrs, figureCtrl) {
-            figureCtrl.addPath(scope);
-        },
-    };
-})
-.directive('path', function() {
-    return {
-        require: '^figure',
-        restrict: 'EA',
-        scope: {},
-        link: function(scope, element, attrs, figureCtrl) {
-            figureCtrl.addPath(scope);
-        },
-    };
-})
 ;
