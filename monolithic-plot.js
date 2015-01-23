@@ -127,11 +127,11 @@ angular.module('plotting', [])
             
             /* The following sets up watches for data, and config
              */
-            $scope.$watch('options', function(newVal, oldVal) {
+            $scope.$watch('options', function() {
                 setOptions($scope, $scope.options);
                 $scope.render();
-            });
-            $scope.$watch('data', function(newVal, oldVal) {
+            }, true);
+            $scope.$watch('data', function() {
                 $scope.render();
             });
 
