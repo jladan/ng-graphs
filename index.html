@@ -8,20 +8,6 @@
     <script src="monolithic-plot.js" charset="utf-8"></script>
     <link rel="stylesheet" href="css/plot-style.css">
 </head>
-<script>
-//Width and height
-var w = 800;
-var h = 400;
-var p = 30;
-
-// We're just testing with sin(x) for now
-var plotData = Array();
-var N = 100;
-for (i=0; i<N; i++) {
-    var x = 12*i/N - 6;
-    plotData.push([x, Math.sin(x)]);
-}
-</script>
 
 <body ng-app='plotting' ng-controller='plotdata'>
 <h1>First, trying out the angular directive</h1>
@@ -32,56 +18,9 @@ for (i=0; i<N; i++) {
 <button ng-click="chooseCosine(N)">Cosine</button>
 <button ng-click="changeDomain()">Domain</button>
 </p>
-<div plot data='data' options="plotConfig" style="height:400px;"></div>
+<div plot data='data' options="plotConfig" style="height:400px;">
+    <line value="{start:[0,0], end:[6,0], strokeWidth:1, color:'black'}"></line>
+</div>
 
-<h1>This next plot is just D3 in the html</h1>
-<div id="plot" style="border: solid steelblue 2px"></div>
-<script type="text/javascript">
-
-//Create SVG element
-var svg = d3.select("#plot")
-            .append("svg")
-            .attr("width", w)
-            .attr("height", h);
-
-// Set up the axes
-var xScale = d3.scale.linear().domain([-6,6]).range([p,w-p]);
-var yScale = d3.scale.linear().domain([-1,1]).range([h-p,p]);
-
-var xAxis = d3.svg.axis()
-    .scale(xScale)
-    .ticks(5)
-    .orient("bottom");
-var yAxis = d3.svg.axis()
-    .scale(yScale)
-    .ticks(5)
-    .orient("left");
-
-// Draw the axes
-svg.append("g")
-    .attr("class", "axis")
-    .attr("transform", "translate(0," + (h/2) + ")")
-    .call(xAxis);
-svg.append("g")
-    .attr("class", "axis")
-    .attr("transform", "translate(" + w/2 + ",0)")
-    .call(yAxis);
-
-// I want a path... so...
-
-// This next bit creates an svg path generator
-var pathGen = d3.svg.line()
-    .x(function(d) {return xScale(d[0]); })
-    .y(function(d) {return yScale(d[1]); })
-    .interpolate("linear");
-
-// Now, the plot is actually added to the svg
-var plot = svg.append("path")
-    .attr("d", pathGen(plotData))
-    .attr("stroke", "blue")
-    .attr("stroke-width", 2)
-    .attr("fill", "none");
-
-</script>
 </body>
 </html>

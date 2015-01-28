@@ -30,14 +30,6 @@ angular.module('plotting', [])
         yDomain: [-1,1],
     }
 
-    $scope.changeDomain = function () {
-        $scope.plotConfig = {
-            xDomain: [-3,3],
-            yDomain: [-1,1],
-        };
-    };
-
-
 })
 .directive('plot', function () {
     var d3 = window.d3;
@@ -57,11 +49,16 @@ angular.module('plotting', [])
 
     return {
         restrict: 'EA',
+        transclude: true,
         scope: {
             options: '=',
             data: '='
         },
         controller: ['$scope', function($scope) {
+
+            // Things that need to be drawn
+            var lines = [];
+
             $scope.drawAxes = function () {
                 var xAxis = d3.svg.axis()
                     .scale($scope.xScale)
@@ -82,31 +79,20 @@ angular.module('plotting', [])
                     .attr("transform", "translate(" + $scope.padding + ",0)")
                     .call(yAxis);
             };
-
-            $scope.render = function() {
-                $scope.svg.selectAll('*').remove();
-                var p = $scope.padding;
+            
+            $scope.drawPlot = function () {
                 var plotData = $scope.data || [[-6,-1],[6,1]];
-                var w = $scope.width;
-                var h = $scope.height;
-
-                // Set up the scales
-                $scope.xScale = d3.scale.linear()
-                    .domain($scope.xDomain).range([p,w-p]);
-                $scope.yScale = d3.scale.linear()
-                    .domain($scope.yDomain).range([h-p,p]);
-
-                $scope.drawAxes();
-
-                // We want to clip the path to the drawing region
+                // We want to clip the path to the drawing region. 
+                // However, clipping to close at the top makes part of the line
+                // disappear
                 var clip = $scope.svg.append("defs").append("clipPath")
                     .attr("id", "plotArea")
                     .append("rect")
                     .attr("id", "clip-rect")
                     .attr("x", $scope.padding)
-                    .attr("y", $scope.padding)
+                    .attr("y", 0)
                     .attr("width", $scope.width-$scope.padding*2)
-                    .attr("height", $scope.height-$scope.padding*2)
+                    .attr("height", $scope.height-$scope.padding)
 
                 var chartBody = $scope.svg.append("g")
                     .attr("clip-path", "url(#plotArea)")
@@ -123,6 +109,43 @@ angular.module('plotting', [])
                     .attr("stroke", "blue")
                     .attr("stroke-width", 2)
                     .attr("fill", "none");
+            };
+
+
+            $scope.render = function() {
+                $scope.svg.selectAll('*').remove();
+                var p = $scope.padding;
+                var w = $scope.width;
+                var h = $scope.height;
+
+                // Set up the scales
+                $scope.xScale = d3.scale.linear()
+                    .domain($scope.xDomain).range([p,w-p]);
+                $scope.yScale = d3.scale.linear()
+                    .domain($scope.yDomain).range([h-p,p]);
+
+                $scope.drawAxes();
+                $scope.drawPlot();
+                lines.forEach(function(line) {
+                    $scope.drawLine(line);
+                });
+            };
+
+            /* Draw a line in the svg element
+             */
+            $scope.drawLine = function(line) {
+                var sw = line.strokeWidth || 1;
+                var color = line.color || 'black';
+                var start = line.start;
+                var end = line.end;
+                var drawnLine = $scope.svg.append("line")
+                        .attr("x1", $scope.xScale(start[0]))
+                        .attr("y1", $scope.yScale(start[1]))
+                        .attr("x2", $scope.xScale(end[0]))
+                        .attr("y2", $scope.yScale(end[1]))
+                        .attr('stroke-width', sw)
+                        .attr('stroke', color)
+                return drawnLine;
             };
             
             /* The following sets up watches for data, and config
@@ -141,6 +164,13 @@ angular.module('plotting', [])
              */
             var apply = function () {$scope.$apply();};
             window.addEventListener('resize', apply);
+
+            /* Controller methods for children to add drawn elements to the SVG
+             */
+            this.addLine = function (line) {
+                lines.push(line)
+            };
+
         }],
         link: function(scope, elm, attrs) {
 
@@ -170,6 +200,21 @@ angular.module('plotting', [])
             });
 
         },
+        template: '<div ng-transclude></div>',
+    };
+})
+/* A directive to add a line to the plot
+ */
+.directive('line', function () {
+    return {
+        require: '^plot',
+        restrict: 'E',
+        scope: {
+            value: '='
+        },
+        link: function(scope, element, attrs, plotCtrl) {
+            plotCtrl.addLine(scope.value);
+        }
     };
 })
 ;
