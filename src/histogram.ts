@@ -5,7 +5,9 @@ module ngHist {
 
     interface IDataScope extends ng.IScope {
         histConfig: HistConfig;
-        data: Array<[number, number]>;
+        data: Array<number>;
+        mv: DataCtrl;
+        N: number;
     }
     export interface HistConfig {
         xDomain: Range;
@@ -17,9 +19,30 @@ module ngHist {
         constructor(private $scope: IDataScope) {
             // Functions to test out $watch on `data`
             $scope.histConfig = {
-                xDomain: [-6, 6],
+                xDomain: [0, 1],
                 xScale: 'linear',
                 yScale: 'linear',
+            }
+            $scope.mv = this;
+            $scope.N = 100;
+            this.hatDist($scope.N);
+        }
+        hatDist(n: number) {
+            var i;
+            this.$scope.data = new Array(n)
+            for (i=0; i<n; i++) {
+                var tmp = Math.random() + Math.random();
+                this.$scope.data[i] = tmp/2;
+            }
+        }
+        moreDist(n: number) {
+            var i;
+            this.$scope.data = new Array(n)
+            for (i=0; i<n; i++) {
+                var j, tmp=0;
+                for (j=0; j<10; j++)
+                    tmp += Math.random();
+                this.$scope.data[i] = tmp/10;
             }
         }
     }
@@ -27,6 +50,7 @@ module ngHist {
     type Range =[number, number];
 
     export interface IHistScope extends ng.IScope {
+        mv: HistCtrl;
         options: any;
         data: any;
         width: number;
@@ -48,8 +72,9 @@ module ngHist {
         xDomain: Range;
         yDomain: Range;
         constructor(private $scope: IHistScope) {
+            $scope.mv = this;
             // Things that need to be drawn
-            $scope.drawAxes = function () {
+            $scope.drawAxes = () => {
                 var xAxis = d3.svg.axis()
                     .scale(this.xScale)
                     .ticks(5)
@@ -88,8 +113,8 @@ module ngHist {
                     });
 
                 bar.append("rect").attr("x", 1)
-                    .attr("width",(d) => { return this.xScale(d.dx); })
-                    .attr("height",(d) => { return this.yScale(d.y); })
+                    .attr("width",(d) => { return this.xScale(d.x+d.dx)-this.xScale(d.x); })
+                    .attr("height",(d) => { return this.yScale(0)-this.yScale(d.y); })
             };
             $scope.render = () => {
                 $scope.svg.selectAll('*').remove();
@@ -112,10 +137,11 @@ module ngHist {
              */
             $scope.$watch('options',  () => {
                 this.setOptions($scope.options);
-                $scope.render();
+                if (this.hdata) 
+                    $scope.render();
             }, true);
             $scope.$watch('data', () => {
-                this.hdata = d3.layout.histogram().bins(this.xScale)($scope.data);
+                this.hdata = d3.layout.histogram().range(this.xDomain).bins(this.xScale.ticks())($scope.data);
                 $scope.render();
             });
 
@@ -136,6 +162,11 @@ module ngHist {
                 this.xDomain = [-1, 1];
                 this.yDomain = [-1, 1];
             }
+            // The xScale is dependent on config more than data
+            var p = this.$scope.padding;
+            var w = this.$scope.width;
+            this.xScale = d3.scale.linear()
+                .domain(this.xDomain).range([p, w - p]);
         }
 
     }
@@ -183,7 +214,7 @@ module ngHist {
         };
     }
 
-    angular.module('plotting', [])
+    angular.module('histogram', [])
     // This service is pulled from 
         .controller('histData', DataCtrl)
         .directive('histogram', histDirective)
