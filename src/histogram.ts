@@ -14,6 +14,7 @@ module ngHist {
         yDomain?: Range;
         xScale: string;
         yScale: string;
+        bins?: number;
     }
     class DataCtrl {
         constructor(private $scope: IDataScope) {
@@ -71,6 +72,7 @@ module ngHist {
         yScale: D3.Scale.QuantitativeScale;
         xDomain: Range;
         yDomain: Range;
+        bins: number;
         constructor(private $scope: IHistScope) {
             $scope.mv = this;
             // Things that need to be drawn
@@ -141,7 +143,7 @@ module ngHist {
                     $scope.render();
             }, true);
             $scope.$watch('data', () => {
-                this.hdata = d3.layout.histogram().range(this.xDomain).bins(this.xScale.ticks())($scope.data);
+                this.hdata = d3.layout.histogram().range(this.xDomain).bins(this.xScale.ticks(this.bins))($scope.data);
                 $scope.render();
             });
 
@@ -156,11 +158,11 @@ module ngHist {
         private setOptions(opts) {
             if (opts) {
                 this.xDomain = opts.xDomain || [-1, 1];
-                this.yDomain = opts.yDomain || [-1, 1];
+                this.yDomain = opts.yDomain;
+                this.bins = opts.bins || 10;
             }
             else {
                 this.xDomain = [-1, 1];
-                this.yDomain = [-1, 1];
             }
             // The xScale is dependent on config more than data
             var p = this.$scope.padding;
