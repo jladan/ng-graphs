@@ -3,48 +3,7 @@
 
 module ngPlot {
 
-    interface IDataScope extends ng.IScope {
-        chooseSine(samples?: number);
-        chooseCosine(samples?: number);
-        plotConfig: any;
-        data: Array<[number, number]>;
-    }
-    class DataCtrl {
-        constructor(private $scope: IDataScope) {
-            // Functions to test out $watch on `data`
-            $scope.chooseSine = function (samples) {
-                var plotData = Array();
-                var N = samples || 100;
-                var i: number;
-                for (i = 0; i <= N; i++) {
-                    var x = 12 * i / N - 6;
-                    plotData.push([x, Math.sin(x)]);
-                }
-                $scope.data = plotData;
-            };
-
-            $scope.chooseCosine = function (samples) {
-                var plotData = Array();
-                var N = samples || 100;
-                var i: number;
-                for (i = 0; i <= N; i++) {
-                    var x = 12 * i / N - 6;
-                    plotData.push([x, Math.cos(x)]);
-                }
-                $scope.data = plotData;
-            };
-
-            $scope.chooseSine();
-
-            $scope.plotConfig = {
-                xDomain: [-6, 6],
-                yDomain: [-1, 1],
-            }
-
-        }
-    }
-
-    export interface IPlotScope extends ng.IScope {
+    interface IPlotScope extends ng.IScope {
         options: any;
         data: any;
         width: number;
@@ -228,7 +187,7 @@ module ngPlot {
         };
     }
 
-    export interface ILineScope extends ng.IScope {
+    interface ILineScope extends ng.IScope {
         value: any;
     }
     function lineDirective(): ng.IDirective {
@@ -244,9 +203,8 @@ module ngPlot {
         };
     }
 
-    angular.module('plotting', [])
+    angular.module('plotModule', [])
     // This service is pulled from 
-        .controller('plotData', DataCtrl)
         .directive('plot', plotDirective)
         .directive('line', lineDirective)
     ;
