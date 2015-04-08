@@ -48,7 +48,7 @@ module ngHist {
         }
     }
 
-    type Range =[number, number];
+    export type Range =[number, number];
 
     export interface IHistScope extends ng.IScope {
         mv: HistCtrl;
@@ -66,7 +66,7 @@ module ngHist {
         drawHist();
         drawAxes();
     }
-    class HistCtrl {
+    export class HistCtrl {
         hdata: D3.Layout.Bin[];
         xScale: D3.Scale.QuantitativeScale;
         yScale: D3.Scale.QuantitativeScale;
