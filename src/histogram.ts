@@ -3,12 +3,7 @@
 
 module ngHist {
 
-    interface IDataScope extends ng.IScope {
-        histConfig: HistConfig;
-        data: Array<number>;
-        mv: DataCtrl;
-        N: number;
-    }
+    export type Range =[number, number];
     export interface HistConfig {
         xDomain: Range;
         yDomain?: Range;
@@ -16,41 +11,8 @@ module ngHist {
         yScale: string;
         bins?: number;
     }
-    class DataCtrl {
-        constructor(private $scope: IDataScope) {
-            // Functions to test out $watch on `data`
-            $scope.histConfig = {
-                xDomain: [0, 1],
-                xScale: 'linear',
-                yScale: 'linear',
-            }
-            $scope.mv = this;
-            $scope.N = 100;
-            this.hatDist($scope.N);
-        }
-        hatDist(n: number) {
-            var i;
-            this.$scope.data = new Array(n)
-            for (i=0; i<n; i++) {
-                var tmp = Math.random() + Math.random();
-                this.$scope.data[i] = tmp/2;
-            }
-        }
-        moreDist(n: number) {
-            var i;
-            this.$scope.data = new Array(n)
-            for (i=0; i<n; i++) {
-                var j, tmp=0;
-                for (j=0; j<10; j++)
-                    tmp += Math.random();
-                this.$scope.data[i] = tmp/10;
-            }
-        }
-    }
 
-    export type Range =[number, number];
-
-    export interface IHistScope extends ng.IScope {
+    interface IHistScope extends ng.IScope {
         mv: HistCtrl;
         options: any;
         data: any;
@@ -66,7 +28,7 @@ module ngHist {
         drawHist();
         drawAxes();
     }
-    export class HistCtrl {
+    class HistCtrl {
         hdata: D3.Layout.Bin[];
         xScale: D3.Scale.QuantitativeScale;
         yScale: D3.Scale.QuantitativeScale;
@@ -216,9 +178,8 @@ module ngHist {
         };
     }
 
-    angular.module('histogram', [])
+    angular.module('histModule', [])
     // This service is pulled from 
-        .controller('histData', DataCtrl)
         .directive('histogram', histDirective)
     ;
 }
