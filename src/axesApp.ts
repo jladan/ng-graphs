@@ -13,6 +13,8 @@ interface IDataScope extends ng.IScope {
     histConfig: any;
     histData: Array<number>;
     N: number;
+
+    sine: (number) => number;
 }
 class DataCtrl {
     constructor(private $scope: IDataScope) {
@@ -39,6 +41,7 @@ class DataCtrl {
             $scope.data = plotData;
         };
 
+        $scope.sine = Math.sin;
         $scope.chooseSine();
 
         $scope.axesConfig = {
@@ -84,5 +87,6 @@ angular.module('plottingApp', [])
     .directive('axes', ngPlot.axesDirective)
     .directive('line', ngPlot.lineDirective)
     .directive('plot', ngPlot.plotDirective)
+    .directive('function', ngPlot.functionDirective)
     .directive('histogram', ngPlot.histogramDirective)
 ;

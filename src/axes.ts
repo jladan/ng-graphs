@@ -217,11 +217,12 @@ module ngPlot {
         };
     }
 
-    interface IPlotScope extends ng.IScope {
+    interface PlotData {
         options: any;
         data: any;
     }
-    function drawPlot(plot: IPlotScope, svg, xScale, yScale) {
+    interface IPlotScope extends ng.IScope, PlotData {}
+    function drawPlot(plot: PlotData, svg, xScale, yScale) {
         // XXX This ends up repeating the version for the line
         // except with different defaults
         var sw = plot.options.strokeWidth || 2;
@@ -257,6 +258,49 @@ module ngPlot {
                     axesCtrl.redrawChild(index);
                 }, true);
                 scope.$watch('data', function () {
+                    axesCtrl.redrawChild(index);
+                });
+            },
+        };
+    }
+    
+    interface IFuncScope extends ng.IScope {
+        options: any;
+        f: any;
+    }
+    function drawFunction(f: IFuncScope, axes: AxesCtrl, svg, xScale, yScale) {
+        // TODO Change N based on width of axes
+        var N = 100;
+        var plotData = Array();
+        var i: number;
+        for (i = 0; i <= N; i++) {
+            var x = (axes.xDomain[1]-axes.xDomain[0]) * i / N + axes.xDomain[0];
+            plotData.push([x, f.f(x)]);
+        }
+
+        var plot: PlotData = {
+            options: f.options,
+            data: plotData,
+        }
+        drawPlot(plot, svg, xScale, yScale);
+    }
+    export function functionDirective(): ng.IDirective {
+        return {
+            restrict: 'E',
+            require: "^axes",
+            transclude: true,
+            scope: {
+                options: '=',
+                f: '='
+            },
+            link: function (scope: IFuncScope, elm, attrs, axesCtrl: AxesCtrl) {
+                /* The following sets up watches for data, and config
+                 */
+                var index = axesCtrl.addChild(drawFunction.bind(null, scope, axesCtrl));
+                scope.$watch('options',  () => {
+                    axesCtrl.redrawChild(index);
+                }, true);
+                scope.$watch('data', () => {
                     axesCtrl.redrawChild(index);
                 });
             },

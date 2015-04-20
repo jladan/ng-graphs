@@ -23,7 +23,8 @@
 <button ng-click="changeDomain()">Domain</button>
 </p>
 <div axes options="axesConfig" style="height:400px;">
-    <plot data="data" options="{strokeWidth:10, color:magenta}"></plot>
+    <plot data="data" options="{strokeWidth:4, color:'magenta'}"></plot>
+    <function f="sine" options="{strokeWidth:2, color:'blue'}"></plot>
     <line start="[-6,0]" end="[6,0]" options="{strokeWidth:1, color:'black'}"></line>
     <line start="[-10,-2]" end="[10,2]" options="{strokeWidth:2, color:'red'}"></line>
 </div>
