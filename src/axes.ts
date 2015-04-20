@@ -3,6 +3,8 @@
 
 module ngPlot {
 
+    type Range =[number, number];
+
     interface IAxesScope extends ng.IScope {
         options: any;
         width: number;
@@ -261,4 +263,46 @@ module ngPlot {
         };
     }
 
+    interface IHistScope extends ng.IScope {
+        options: any;
+        data: any;
+    }
+    function drawHistogram(hist: IHistScope, axes: AxesCtrl, svg, xScale, yScale) {
+        var bins = hist.options.bins || 10;
+        var hdata: D3.Layout.Bin[] = d3.layout.histogram().frequency(false).range(axes.xDomain).bins(xScale.ticks(bins))(hist.data);
+
+        var bar = svg.selectAll(".bar")
+            .data(hdata).enter().append("g")
+            .attr("class", "bar")
+            .attr("transform", (d) => {
+                return "translate(" + xScale(d.x) + "," +
+                    yScale(d.y) + ")"
+            });
+
+        bar.append("rect").attr("x", 1)
+            .attr("width",(d) => { return xScale(d.x+d.dx)-xScale(d.x); })
+            .attr("height",(d) => { return yScale(0)-yScale(d.y); })
+    }
+    export function histogramDirective(): ng.IDirective {
+        return {
+            restrict: 'E',
+            require: "^axes",
+            transclude: true,
+            scope: {
+                options: '=',
+                data: '='
+            },
+            link: function (scope: IHistScope, elm, attrs, axesCtrl: AxesCtrl) {
+                /* The following sets up watches for data, and config
+                 */
+                var index = axesCtrl.addChild(drawHistogram.bind(null, scope, axesCtrl));
+                scope.$watch('options',  () => {
+                    axesCtrl.redrawChild(index);
+                }, true);
+                scope.$watch('data', () => {
+                    axesCtrl.redrawChild(index);
+                });
+            },
+        };
+    }
 }

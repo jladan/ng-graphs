@@ -8,6 +8,9 @@
     <script src="build/axes.js" charset="utf-8"></script>
     <script src="build/axesApp.js" charset="utf-8"></script>
     <link rel="stylesheet" href="css/plot-style.css">
+    <style>
+        .bar rect {stroke:white; fill:blue;}
+    </style>
 </head>
 
 <body ng-app='plottingApp' ng-controller='axesData'>
@@ -24,5 +27,18 @@
     <line start="[-6,0]" end="[6,0]" options="{strokeWidth:1, color:'black'}"></line>
     <line start="[-10,-2]" end="[10,2]" options="{strokeWidth:2, color:'red'}"></line>
 </div>
+
+<h2> And this bit is for a histogram </h2>
+<p>
+<input ng-model="N"></input>
+<p>
+<button ng-click="mv.hatDist(N)">Hat</button>
+<button ng-click="mv.moreDist(N)">More</button>
+</p>
+<div axes options="histConfig" style="height:400px;">
+    <histogram data='histData' options="histConfig"></histogram>
+</div>
+
+
 </body>
 </html>
