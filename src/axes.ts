@@ -8,8 +8,6 @@ module ngPlot {
         width: number;
         height: number;
         padding: number[];
-        xDomain: [number, number];
-        yDomain: [number, number];
         xLabel: string;
         yLabel: string;
         svg: D3.Selection;
@@ -19,6 +17,10 @@ module ngPlot {
         render(): any;
     }
     class AxesCtrl {
+        drawingRegion: D3.Selection;
+        xDomain: [number, number];
+        yDomain: [number, number];
+
         constructor(private $scope: IAxesScope) {
             // So that the watches in the link function can call for a re-render
             $scope.render = this.render.bind(this);
@@ -46,9 +48,9 @@ module ngPlot {
 
             // Set up the scales
             $scope.xScale = d3.scale.linear()
-                .domain($scope.xDomain).range([p[3], w + p[3]]);
+                .domain(this.xDomain).range([p[3], w + p[3]]);
             $scope.yScale = d3.scale.linear()
-                .domain($scope.yDomain).range([h + p[0], p[0]]);
+                .domain(this.yDomain).range([h + p[0], p[0]]);
 
             this.drawAxes();
             this.drawChildren();
@@ -87,6 +89,20 @@ module ngPlot {
                 .attr("transform", "translate("+ (-$scope.padding[3]+10)+", "+$scope.height/2+"),"
                                   +"rotate(-90)")
                 .text($scope.yLabel || "");
+
+            // We want to clip the drawing region.
+            var clip = $scope.svg.append("defs").append("clipPath")
+                .attr("id", "plotArea")
+                .append("rect")
+                .attr("id", "clip-rect")
+                .attr("x", $scope.padding[3])
+                .attr("y", $scope.padding[0])
+                .attr("width", $scope.width - $scope.padding[1] - $scope.padding[3])
+                .attr("height", $scope.height - $scope.padding[0] - $scope.padding[2])
+
+            this.drawingRegion = $scope.svg.append("g")
+                .attr("clip-path", "url(#plotArea)")
+
         }
 
         /** Sets the options for the plot, such as axis locations, range, etc...
@@ -94,14 +110,14 @@ module ngPlot {
         private setOptions(opts) {
             this.$scope.padding = [30,30,30,30] // top right bottom left
             if (opts) {
-                this.$scope.xDomain = opts.xDomain || [-1, 1];
-                this.$scope.yDomain = opts.yDomain || [-1, 1];
+                this.xDomain = opts.xDomain || [-1, 1];
+                this.yDomain = opts.yDomain || [-1, 1];
                 this.$scope.xLabel = opts.xLabel || "";
                 this.$scope.yLabel = opts.yLabel || "";
             }
             else {
-                this.$scope.xDomain = [-1, 1];
-                this.$scope.yDomain = [-1, 1];
+                this.xDomain = [-1, 1];
+                this.yDomain = [-1, 1];
                 this.$scope.xLabel = "";
                 this.$scope.yLabel = "";
             }
@@ -117,9 +133,14 @@ module ngPlot {
             delete this.children[index];
         }
 
+        redrawChild(index) {
+            // XXX for now, we're just re-rendering the whole thing
+            this.render();
+        }
+
         drawChildren() {
             for (var i in this.children)
-                this.children[i](this.$scope.svg, this.$scope.xScale, this.$scope.yScale);
+                this.children[i](this.drawingRegion, this.$scope.xScale, this.$scope.yScale);
         }
 
     }
@@ -189,8 +210,55 @@ module ngPlot {
                 options: '=',
             },
             link: function (scope: ILineScope, element, attrs, axesCtrl) {
-                axesCtrl.addChild(drawLine.bind(null, scope));
+                var index = axesCtrl.addChild(drawLine.bind(null, scope));
             }
         };
     }
+
+    interface IPlotScope extends ng.IScope {
+        options: any;
+        data: any;
+    }
+    function drawPlot(plot: IPlotScope, svg, xScale, yScale) {
+        // XXX This ends up repeating the version for the line
+        // except with different defaults
+        var sw = plot.options.strokeWidth || 2;
+        var color = plot.options.color || 'blue';
+
+        var plotData = plot.data || [];
+
+        // This next bit creates an svg path generator
+        var pathGen = d3.svg.line()
+            .x(function (d) { return xScale(d[0]); })
+            .y(function (d) { return yScale(d[1]); })
+            .interpolate("linear");
+
+        // Now, the plot is actually added to the svg
+        svg.append("path")
+            .attr("d", pathGen(plotData))
+            .attr("stroke", color)
+            .attr("stroke-width", sw)
+            .attr("fill", "none");
+    }
+    export function plotDirective(): ng.IDirective {
+        return {
+            restrict: 'E',
+            require: '^axes',
+            transclude: true,
+            scope: {
+                options: '=',
+                data: '='
+            },
+            link: function (scope: IPlotScope, elm, attrs, axesCtrl) {
+                var index = axesCtrl.addChild(drawPlot.bind(null, scope));
+                scope.$watch('options',  () => {
+                    axesCtrl.redrawChild(index);
+                }, true);
+                scope.$watch('data', function () {
+                    axesCtrl.redrawChild(index);
+                });
+            },
+        };
+    }
+
 }

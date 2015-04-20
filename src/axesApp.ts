@@ -1,6 +1,6 @@
 /// <reference path="../typings/angularjs/angular.d.ts" />
 /// <reference path="../typings/d3/d3.d.ts" />
-/// <reference path="./axis.ts" />
+/// <reference path="./axes.ts" />
 
 interface IDataScope extends ng.IScope {
     chooseSine(samples?: number);
@@ -41,7 +41,6 @@ class DataCtrl {
             xLabel: "this is a label for the X axis",
             yLabel: "this is a label for the Y axis",
         }
-
     }
 }
 
@@ -49,4 +48,5 @@ angular.module('plottingApp', [])
     .controller('axesData', DataCtrl)
     .directive('axes', ngPlot.axesDirective)
     .directive('line', ngPlot.lineDirective)
+    .directive('plot', ngPlot.plotDirective)
 ;
