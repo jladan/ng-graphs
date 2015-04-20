@@ -11,6 +11,8 @@ module ngPlot {
         padding: number;
         xDomain: [number, number];
         yDomain: [number, number];
+        xLabel: string;
+        yLabel: string;
         svg: D3.Selection;
         xScale: D3.Scale.LinearScale;
         yScale: D3.Scale.LinearScale;
@@ -39,12 +41,21 @@ module ngPlot {
                 // Draw the axes
                 $scope.svg.append("g")
                     .attr("class", "axis")
-                    .attr("transform", "translate(0," + ($scope.height - $scope.padding) + ")")
-                    .call(xAxis);
+                    .attr("transform", "translate(0," + $scope.height + ")")
+                    .call(xAxis)
+                    .append("text").attr("class","label")
+                    .attr("style","text-anchor:middle")
+                    .attr("transform", "translate("+$scope.width/2+", "+($scope.padding)+")")
+                    .text($scope.xLabel || "");
                 $scope.svg.append("g")
                     .attr("class", "axis")
                     .attr("transform", "translate(" + $scope.padding + ",0)")
-                    .call(yAxis);
+                    .call(yAxis)
+                    .append("text").attr("class","label")
+                    .attr("style","text-anchor:middle")
+                    .attr("transform", "translate("+ (-$scope.padding+10)+", "+$scope.height/2+"),"
+                                      +"rotate(-90)")
+                    .text($scope.yLabel || "");
             };
             $scope.drawPlot = function () {
                 var plotData = $scope.data || [[-6, -1], [6, 1]];
@@ -58,7 +69,7 @@ module ngPlot {
                     .attr("x", $scope.padding)
                     .attr("y", 0)
                     .attr("width", $scope.width - $scope.padding * 2)
-                    .attr("height", $scope.height - $scope.padding)
+                    .attr("height", $scope.height)
 
                 var chartBody = $scope.svg.append("g")
                     .attr("clip-path", "url(#plotArea)")
@@ -84,9 +95,9 @@ module ngPlot {
 
                 // Set up the scales
                 $scope.xScale = d3.scale.linear()
-                    .domain($scope.xDomain).range([p, w - p]);
+                    .domain($scope.xDomain).range([p, w]);
                 $scope.yScale = d3.scale.linear()
-                    .domain($scope.yDomain).range([h - p, p]);
+                    .domain($scope.yDomain).range([h, p]);
 
                 $scope.drawAxes();
                 $scope.drawPlot();
@@ -131,6 +142,8 @@ module ngPlot {
         }
         addLine(line) { this.lines.push(line) }
 
+        /** Sets the options for the plot, such as axis locations, range, etc...
+         */
         private setOptions(opts) {
             if (opts) {
                 this.$scope.xDomain = opts.xDomain || [-1, 1];
@@ -144,9 +157,6 @@ module ngPlot {
 
     }
     function plotDirective(): ng.IDirective {
-        /* Sets the options for the plot, such as axis locations, range, etc...
-         */
-
         return {
             restrict: 'EA',
             transclude: true,
@@ -156,8 +166,6 @@ module ngPlot {
             },
             controller: PlotCtrl,
             link: function (scope: IPlotScope, elm, attrs) {
-
-                // TODO read plot options
                 scope.padding = 30;
                 scope.svg = d3.select(elm[0])
                     .append("svg")
