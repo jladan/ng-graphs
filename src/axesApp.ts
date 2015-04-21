@@ -52,6 +52,8 @@ class DataCtrl {
         }
 
         $scope.histConfig = {
+            xDomain: [-6, 6],
+            yDomain: [0,1],
             bins: 20,
         }
 

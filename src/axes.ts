@@ -12,21 +12,22 @@ module ngPlot {
     interface IAxesScope extends ng.IScope {
         mv: AxesCtrl;
         options: any;
+        // XXX The following need to be in the scope, because they are set/used
+        // in the linking function
         width: number;
         height: number;
-        padding: number[];
-        xLabel: string;
-        yLabel: string;
         svg: D3.Selection;
-        xScale: D3.Scale.LinearScale;
-        yScale: D3.Scale.LinearScale;
-
         render(): any;
     }
     class AxesCtrl {
         drawingRegion: D3.Selection;
         xDomain: Range;
         yDomain: Range;
+        xScale: D3.Scale.LinearScale;
+        yScale: D3.Scale.LinearScale;
+        padding: number[];
+        xLabel: string;
+        yLabel: string;
 
         constructor(private $scope: IAxesScope) {
             $scope.mv = this;
@@ -50,14 +51,14 @@ module ngPlot {
             var $scope = this.$scope;
             this.setOptions(this.$scope.options);
             $scope.svg.selectAll('*').remove();
-            var p = $scope.padding;
+            var p = this.padding;
             var w = $scope.width - (p[1]+p[3]);
             var h = $scope.height - (p[0]+p[2]);
 
             // Set up the scales
-            $scope.xScale = d3.scale.linear()
+            this.xScale = d3.scale.linear()
                 .domain(this.xDomain).range([p[3], w + p[3]]);
-            $scope.yScale = d3.scale.linear()
+            this.yScale = d3.scale.linear()
                 .domain(this.yDomain).range([h + p[0], p[0]]);
 
             this.drawAxes();
@@ -71,42 +72,42 @@ module ngPlot {
             var $scope = this.$scope;
             // Define the axis functions
             var xAxis = d3.svg.axis()
-                .scale($scope.xScale)
+                .scale(this.xScale)
                 .ticks(5)
                 .orient("bottom");
             var yAxis = d3.svg.axis()
-                .scale($scope.yScale)
+                .scale(this.yScale)
                 .ticks(5)
                 .orient("left");
 
             // Draw the axes
             $scope.svg.append("g")
                 .attr("class", "axis")
-                .attr("transform", "translate(0," + ($scope.height-$scope.padding[2]) + ")")
+                .attr("transform", "translate(0," + ($scope.height-this.padding[2]) + ")")
                 .call(xAxis)
                 .append("text").attr("class","label")
                 .attr("style","text-anchor:middle")
-                .attr("transform", "translate("+$scope.width/2+", "+($scope.padding[2])+")")
-                .text($scope.xLabel || "");
+                .attr("transform", "translate("+$scope.width/2+", "+(this.padding[2])+")")
+                .text(this.xLabel || "");
             $scope.svg.append("g")
                 .attr("class", "axis")
-                .attr("transform", "translate(" + $scope.padding[3] + ",0)")
+                .attr("transform", "translate(" + this.padding[3] + ",0)")
                 .call(yAxis)
                 .append("text").attr("class","label")
                 .attr("style","text-anchor:middle")
-                .attr("transform", "translate("+ (-$scope.padding[3]+10)+", "+$scope.height/2+"),"
+                .attr("transform", "translate("+ (-this.padding[3]+10)+", "+$scope.height/2+"),"
                                   +"rotate(-90)")
-                .text($scope.yLabel || "");
+                .text(this.yLabel || "");
 
             // We want to clip the drawing region.
             var clip = $scope.svg.append("defs").append("clipPath")
                 .attr("id", "plotArea")
                 .append("rect")
                 .attr("id", "clip-rect")
-                .attr("x", $scope.padding[3])
-                .attr("y", $scope.padding[0])
-                .attr("width", $scope.width - $scope.padding[1] - $scope.padding[3])
-                .attr("height", $scope.height - $scope.padding[0] - $scope.padding[2])
+                .attr("x", this.padding[3])
+                .attr("y", this.padding[0])
+                .attr("width", $scope.width - this.padding[1] - this.padding[3])
+                .attr("height", $scope.height - this.padding[0] - this.padding[2])
 
             this.drawingRegion = $scope.svg.append("g")
                 .attr("clip-path", "url(#plotArea)")
@@ -116,18 +117,18 @@ module ngPlot {
         /** Sets the options for the plot, such as axis locations, range, etc...
          */
         private setOptions(opts) {
-            this.$scope.padding = [30,30,30,30] // top right bottom left
+            this.padding = [30,30,30,30] // top right bottom left
             if (opts) {
                 this.xDomain = opts.xDomain || [-1, 1];
                 this.yDomain = opts.yDomain || [-1, 1];
-                this.$scope.xLabel = opts.xLabel || "";
-                this.$scope.yLabel = opts.yLabel || "";
+                this.xLabel = opts.xLabel || "";
+                this.yLabel = opts.yLabel || "";
             }
             else {
                 this.xDomain = [-1, 1];
                 this.yDomain = [-1, 1];
-                this.$scope.xLabel = "";
-                this.$scope.yLabel = "";
+                this.xLabel = "";
+                this.yLabel = "";
             }
         }
 
@@ -147,7 +148,7 @@ module ngPlot {
         drawChild(index) {
             this.undrawChild(index);
             this.drawnElements[index] = 
-                    this.children[index](this.drawingRegion, this.$scope.xScale, this.$scope.yScale, this);
+                    this.children[index](this.drawingRegion, this.xScale, this.yScale, this);
         }
         
         reorderElements() {
@@ -354,8 +355,8 @@ module ngPlot {
 
         var hdata: D3.Layout.Bin[] = d3.layout.histogram().frequency(false).range(axes.xDomain).bins(xScale.ticks(bins))(hist.data);
 
-        var hist = svg.append('g')
-        var bar = hist.selectAll(".bar")
+        var h = svg.append('g')
+        var bar = h.selectAll(".bar")
             .data(hdata).enter().append("g")
             .attr("class", "bar")
             .attr("transform", (d) => {
@@ -367,7 +368,7 @@ module ngPlot {
             .attr("width",(d) => { return xScale(d.x+d.dx)-xScale(d.x); })
             .attr("height",(d) => { return yScale(0)-yScale(d.y); })
 
-        return hist;
+        return h;
     }
     export function histogramDirective(): ng.IDirective {
         return {
