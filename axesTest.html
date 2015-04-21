@@ -20,11 +20,12 @@
 <p>
 <button ng-click="chooseSine(N)">Sine</button>
 <button ng-click="chooseCosine(N)">Cosine</button>
-<button ng-click="changeDomain()">Domain</button>
+<button ng-click="mv.undrawChild(0)">Undraw plot</button>
 </p>
 <div axes options="axesConfig" style="height:400px;">
+    <histogram data='histData' options="histConfig"></histogram>
     <plot data="data" options="{strokeWidth:4, color:'magenta'}"></plot>
-    <function f="sine" options="{strokeWidth:2, color:'blue'}"></plot>
+    <function f="sine" options="{strokeWidth:2, color:'blue'}"></function>
     <line start="[-6,0]" end="[6,0]" options="{strokeWidth:1, color:'black'}"></line>
     <line start="[-10,-2]" end="[10,2]" options="{strokeWidth:2, color:'red'}"></line>
 </div>
@@ -37,7 +38,6 @@
 <button ng-click="mv.moreDist(N)">More</button>
 </p>
 <div axes options="histConfig" style="height:400px;">
-    <histogram data='histData' options="histConfig"></histogram>
 </div>
 
 

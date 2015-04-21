@@ -52,22 +52,25 @@ class DataCtrl {
         }
 
         $scope.histConfig = {
-            xDomain: [0, 1],
-            yDomain: [0, 1],
-            xScale: 'linear',
-            yScale: 'linear',
+            bins: 20,
         }
 
         $scope.mv = this;
         this.hatDist(100);
         $scope.N = 100;
     }
+
+    undrawChild(index: number) {
+        this.$scope.data = [];
+    }
+
     hatDist(n: number) {
         var i;
         this.$scope.histData = new Array(n)
         for (i=0; i<n; i++) {
             var tmp = Math.random() + Math.random();
-            this.$scope.histData[i] = tmp/2;
+            tmp = tmp*12
+            this.$scope.histData[i] = tmp/2 -6;
         }
     }
     moreDist(n: number) {
@@ -76,7 +79,7 @@ class DataCtrl {
         for (i=0; i<n; i++) {
             var j, tmp=0;
             for (j=0; j<10; j++)
-                tmp += Math.random();
+                tmp += Math.random()*12 - 6;
             this.$scope.histData[i] = tmp/10;
         }
     }

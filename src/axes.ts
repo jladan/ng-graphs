@@ -4,8 +4,13 @@
 module ngPlot {
 
     type Range =[number, number];
+    type DrawFunction = (svg: D3.Selection, 
+                         xScale: D3.Scale.QuantitativeScale,
+                         yScale: D3.Scale.QuantitativeScale,
+                         axes?: AxesCtrl) => D3.Selection;
 
     interface IAxesScope extends ng.IScope {
+        mv: AxesCtrl;
         options: any;
         width: number;
         height: number;
@@ -20,10 +25,11 @@ module ngPlot {
     }
     class AxesCtrl {
         drawingRegion: D3.Selection;
-        xDomain: [number, number];
-        yDomain: [number, number];
+        xDomain: Range;
+        yDomain: Range;
 
         constructor(private $scope: IAxesScope) {
+            $scope.mv = this;
             // So that the watches in the link function can call for a re-render
             $scope.render = this.render.bind(this);
 
@@ -126,23 +132,51 @@ module ngPlot {
         }
 
         // Bits that handle all of the children of the plot
-        children = [];
+        children: DrawFunction[] = [];
+        drawnElements: D3.Selection[] = [];
         
-        addChild(drawFunction) {
+        addChild(drawFunction: DrawFunction) {
             return this.children.push(drawFunction) -1;
         }
         rmChild(index) {
+            // XXX if we remove the child, we probably also want to undraw it
+            this.undrawChild(index);
             delete this.children[index];
         }
 
+        drawChild(index) {
+            this.undrawChild(index);
+            this.drawnElements[index] = 
+                    this.children[index](this.drawingRegion, this.$scope.xScale, this.$scope.yScale, this);
+        }
+        
+        reorderElements() {
+            // Reorder the drawn elements
+            var plot: Node = this.drawingRegion[0][0], tmp: Node[];
+            for (var i in this.drawnElements) {
+                tmp = this.drawnElements[i][0];
+                for (var j=0; j<tmp.length; j++) {
+                    //plot.removeChild(tmp[j]);
+                    plot.appendChild(tmp[j]);
+                }
+            }
+        }
+
         redrawChild(index) {
-            // XXX for now, we're just re-rendering the whole thing
-            this.render();
+            this.drawChild(index);
+            this.reorderElements();
         }
 
         drawChildren() {
             for (var i in this.children)
-                this.children[i](this.drawingRegion, this.$scope.xScale, this.$scope.yScale);
+                this.drawChild(i);
+        }
+
+        undrawChild(index: number) {
+            if (this.drawnElements[index]) {
+                this.drawnElements[index].remove();
+                delete this.drawnElements[index];
+            }
         }
 
     }
@@ -183,12 +217,14 @@ module ngPlot {
         };
     }
 
-    interface ILineScope extends ng.IScope {
+
+    interface LineData {
         start:   [number, number];
         end:     [number, number];
         options: any;
     }
-    function drawLine(l: ILineScope, svg, xScale, yScale) {
+    interface ILineScope extends ng.IScope, LineData {}
+    function drawLine(l: LineData, svg, xScale, yScale) {
         var sw = l.options.strokeWidth || 1;
         var color = l.options.color || 'black';
         var start = l.start;
@@ -237,11 +273,12 @@ module ngPlot {
             .interpolate("linear");
 
         // Now, the plot is actually added to the svg
-        svg.append("path")
+        var path = svg.append("path")
             .attr("d", pathGen(plotData))
             .attr("stroke", color)
             .attr("stroke-width", sw)
             .attr("fill", "none");
+        return path;
     }
     export function plotDirective(): ng.IDirective {
         return {
@@ -268,7 +305,7 @@ module ngPlot {
         options: any;
         f: any;
     }
-    function drawFunction(f: IFuncScope, axes: AxesCtrl, svg, xScale, yScale) {
+    function drawFunction(f: IFuncScope, axes: AxesCtrl, svg, xScale, yScale): void {
         // TODO Change N based on width of axes
         var N = 100;
         var plotData = Array();
@@ -282,7 +319,7 @@ module ngPlot {
             options: f.options,
             data: plotData,
         }
-        drawPlot(plot, svg, xScale, yScale);
+        return drawPlot(plot, svg, xScale, yScale);
     }
     export function functionDirective(): ng.IDirective {
         return {
@@ -307,15 +344,18 @@ module ngPlot {
         };
     }
 
-    interface IHistScope extends ng.IScope {
+    interface HistData {
         options: any;
         data: any;
     }
-    function drawHistogram(hist: IHistScope, axes: AxesCtrl, svg, xScale, yScale) {
+    interface IHistScope extends ng.IScope, HistData {}
+    function drawHistogram(hist: HistData, axes: AxesCtrl, svg, xScale, yScale) {
         var bins = hist.options.bins || 10;
+
         var hdata: D3.Layout.Bin[] = d3.layout.histogram().frequency(false).range(axes.xDomain).bins(xScale.ticks(bins))(hist.data);
 
-        var bar = svg.selectAll(".bar")
+        var hist = svg.append('g')
+        var bar = hist.selectAll(".bar")
             .data(hdata).enter().append("g")
             .attr("class", "bar")
             .attr("transform", (d) => {
@@ -326,6 +366,8 @@ module ngPlot {
         bar.append("rect").attr("x", 1)
             .attr("width",(d) => { return xScale(d.x+d.dx)-xScale(d.x); })
             .attr("height",(d) => { return yScale(0)-yScale(d.y); })
+
+        return hist;
     }
     export function histogramDirective(): ng.IDirective {
         return {
