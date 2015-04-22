@@ -1,42 +1,51 @@
 Angular Plotting using D3
 =========================
 
-This repository contains one (or two) ideas for using D3 to handle plotting in angular.
+This is a simple plotting library using [AngularJS](http://angularjs.org), and [D3](http://d3js.org) (for svg rendering). Graphs are made modularly, with a set of axes sourrounding the various components (e.g. plots, histograms, lines) drawn on top.
 
-Idea 1 *Multi-directive* plots.
--------------------------------
+The resulting structure may look similar to [Radian](http://openbrainsrc.github.io/Radian/index.html), however it differs in a few ways:
 
-This is the idea put forth in `radius`. A full plot would be created with several directives:
+* It is smaller -- Radian includes many features that can be accomplished through existing html and css
+* Code and presentation are separate -- Radian tends to allow variable declarations and function definitions inside its attributes
+* No data retrieval. (let the existing frameworks do that for us)
 
-    <figure>
-        <axes xdomain="" ydomain=""></axes>
-        <plot plot-data="" color=""></plot>
-    </figure>
+In short, if you just want to show a function or some data, use Radian. If you want to separate the theme/appearance, and manage most of the data in javascript, we're a good choice.
 
-and so on. It seems quite nice, because it pushes more of the declaration of the plot into the html, but it also makes it more difficult programmatically. For example, if we wanted multiple data sets in the plot, it would be necessary to add more `<plot>` directives, possibly using `ngRepeat`.
+How to use
+----------
 
-Idea 2 *Monolithic* plots.
---------------------------
+All plots go on a set of axes. The `axes` directive controls the scales and renders the horizontal and vertical axes. A typical set up looks like,
 
-A directive that handles all of the plotting in one fell swoop. The configuration, such as axes, domain, colours, etc. are all handled in a config object passed as an argument. Lines to be plotted are passed in another argument.
+    <axes options="axesOptions>
+        <plot data="data" options="plotOptions"></plot>
+        <line start="[-6,0]" end="[6,0]" options="{strokeWidth:1, color:'black'}"></line>
+    </axes>
 
-    <plot-2d plot-data="" config=""></plot-2d>
+Each element inside the `axes` directive is rendered in the same space, using the coordinate system of the axes. Thus, that line draws a horizontal rule for y=0. The `options` and `data` attributes (and `start` and `end`) are standard AngularJS scoping options. That is, any variables in the parent controller's scope or javascript expressions can be used.
 
-This has an advantage that *all* of the plot data is held in scope, including what components are to be rendered. There can also be more error handling if components are not added to the plot (like axes)
+Types of Graph(ic)s
+-------------------
 
-Idea 3 *Monolithic + Directive* plots
--------------------------------------
+The following graphs and graphical elements are included:
 
-I think I like this idea best: make a standard monolithic plot, with all the advantages mentioned before, but also allow directives to draw things like lines, or subplots.
+### `plot`
 
-    <figure>
-        <plot-2d plot-data="" config=""></plot-2d>
-        <subfigure position="">
-            <plot-2d plot-data="" config=""></plot-2d>
-        </subfigure>
-        <line start="" end=""></line>
-    </figure>
+Plot a series of data or a trail. The `data` argument is expected to have the type `Array<[number,number]>` (using Typescript conventions). Options can set stroke width, colour, etc.
 
-It would also be cool if lines were able to be drawn inside the plots as well. The position for children of plots would be in the scale associated with the plot, while the position for children of figures would be relative (in [0,1]).
+### `function`
 
-Other possible components would be `<figure-grid>`, `<circle>`, and so on.
+Exactly Like the plot, except taking a javascript function (type `(x: number) => number`) defined in the scope as `f` instead of a data series.
+
+### `histogram`
+
+Draw a histogram. Here, `data` is an `Array<number>`. The data is put into bins based on the `xDomain` option (of either `axes` or `histogram`) and `bins` option (of the `histogram`).
+
+### `line`
+
+Draw a line from `start` to `end`. The coordinates are the the coordinate system set up by `axes`, of type `[number, number]`.
+
+
+License
+-------
+
+See LICENSE.txt
