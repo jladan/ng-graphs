@@ -55,11 +55,12 @@ Draw a line from `start` to `end`. The coordinates are the the coordinate system
 Building the Library
 --------------------
 
-The built library is available as mentioned above in 'How to use'. However, if you're making changes, the library can be built with the command
+The built library is available as mentioned above in 'How to use'. However, if you're making changes, the library can be built with the commands
 
+    tsd update
     tsc @libflags
 
-The demo/test page is built with
+The first command installs the type declarations for Angular and D3, so is only needed once. The demo/test page is built with
 
     tsc @demoflags
 
