@@ -86,11 +86,6 @@ class DataCtrl {
     }
 }
 
-angular.module('plottingApp', [])
+angular.module('plottingApp', ['ngGraphs'])
     .controller('axesData', DataCtrl)
-    .directive('axes', ngPlot.axesDirective)
-    .directive('line', ngPlot.lineDirective)
-    .directive('plot', ngPlot.plotDirective)
-    .directive('function', ngPlot.functionDirective)
-    .directive('histogram', ngPlot.histogramDirective)
 ;

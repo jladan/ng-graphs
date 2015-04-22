@@ -1,7 +1,7 @@
 /// <reference path="../typings/angularjs/angular.d.ts" />
 /// <reference path="../typings/d3/d3.d.ts" />
 
-module ngPlot {
+module ngGraphs {
 
     type Range =[number, number];
     type DrawFunction = (svg: D3.Selection, 
@@ -392,4 +392,11 @@ module ngPlot {
             },
         };
     }
+
+    angular.module('ngGraphs', [])
+        .directive('axes', axesDirective)
+        .directive('line', lineDirective)
+        .directive('plot', plotDirective)
+        .directive('function', functionDirective)
+        .directive('histogram', histogramDirective)
 }
