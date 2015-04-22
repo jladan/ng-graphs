@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>D3 Demo: Making a scatterplot with SVG</title>
+    <title>ng-graphs demo: drawing a bunch of elements on a set of axes</title>
     <script src="http://d3js.org/d3.v3.js" charset="utf-8"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.js"></script>
-    <script src="build/axes.js" charset="utf-8"></script>
-    <script src="build/axesApp.js" charset="utf-8"></script>
+    <script src="../build/graphs.js" charset="utf-8"></script>
+    <script src="axesApp.js" charset="utf-8"></script>
     <link rel="stylesheet" href="css/plot-style.css">
     <style>
         .bar rect {stroke:white; fill:blue;}
@@ -16,11 +16,14 @@
 <body ng-app='plottingApp' ng-controller='axesData'>
 <h1>This is a test of the axes directive, which draws its children.</h1>
 <p>
+<input ng-model="samples"></input>
 <input ng-model="N"></input>
 <p>
-<button ng-click="chooseSine(N)">Sine</button>
-<button ng-click="chooseCosine(N)">Cosine</button>
-<button ng-click="mv.undrawChild(0)">Undraw plot</button>
+<button ng-click="chooseSine(samples)">Sine</button>
+<button ng-click="chooseCosine(samples)">Cosine</button>
+&lt; plot | histrogram &gt;
+<button ng-click="mv.hatDist(N)">Hat</button>
+<button ng-click="mv.moreDist(N)">More</button>
 </p>
 <div axes options="axesConfig" style="height:400px;">
     <histogram data='histData' options="histConfig"></histogram>
@@ -30,15 +33,10 @@
     <line start="[-10,-2]" end="[10,2]" options="{strokeWidth:2, color:'red'}"></line>
 </div>
 
-<h2> And this bit is for a histogram </h2>
-<p>
-<input ng-model="N"></input>
-<p>
-<button ng-click="mv.hatDist(N)">Hat</button>
-<button ng-click="mv.moreDist(N)">More</button>
+<h2>We can draw the histogram elsewhere, with different options too.
 </p>
 <div axes options="histConfig" style="height:400px;">
-    <histogram data='histData' options="histConfig"></histogram>
+    <histogram data='histData' options="{bins: 100}"></histogram>
 </div>
 
 

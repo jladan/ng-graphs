@@ -1,6 +1,5 @@
 /// <reference path="../typings/angularjs/angular.d.ts" />
-/// <reference path="../typings/d3/d3.d.ts" />
-/// <reference path="./axes.ts" />
+/// <reference path="../build/graphs.d.ts" />
 
 interface IDataScope extends ng.IScope {
     mv: DataCtrl;

@@ -1,2 +1,4 @@
 --declaration
 --outDir build
+
+src/graphs.ts

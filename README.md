@@ -8,13 +8,20 @@ The resulting structure may look similar to [Radian](http://openbrainsrc.github.
 * It is smaller -- Radian includes many features that can be accomplished through existing html and css
 * Code and presentation are separate -- Radian tends to allow variable declarations and function definitions inside its attributes
 * No data retrieval. (let the existing frameworks do that for us)
+* Written in Typescript (we like the static analysis)
 
-In short, if you just want to show a function or some data, use Radian. If you want to separate the theme/appearance, and manage most of the data in javascript, we're a good choice.
+In short, if you just want to show a function or some data, use Radian. If you want to separate the theme/appearance, and manage most of the data in javascript/typescript, we're a good choice.
 
 How to use
 ----------
 
-All plots go on a set of axes. The `axes` directive controls the scales and renders the horizontal and vertical axes. A typical set up looks like,
+The built library (and typescript declarations) are available [on github](https://github.com/jladan/bower-ng-graphs), and can be installed with Bower via
+
+    bower install git@github.com:jladan/bower-ng-graphs.git
+
+No, we're not registered in the bower repository yet. The `d3.js` and `angular.js` scripts need to be included on the page before `graphs.js`. They are available through bower, npm, source, and on content delivery networks (CDN).
+
+Then, you're ready to use it in the page. All plots go on a set of axes. The `axes` directive controls the scales and renders the horizontal and vertical axes. A typical set up looks like,
 
     <axes options="axesOptions>
         <plot data="data" options="plotOptions"></plot>
