@@ -12,7 +12,7 @@ module ngGraphs {
     interface Drawable {
         draw:   DrawFunction;
         xRange: () => Range;
-        yRange: () => Range;
+        yRange: (axes: AxesCtrl) => Range;
     }
     export interface AxesConfig {
         xDomain?: Range;
@@ -419,29 +419,52 @@ module ngGraphs {
         frequency?: boolean;
     }
     interface HistData {
-        options: any;
-        data: any;
+        options: HistConfig;
+        data: number[];
     }
     interface IHistScope extends ng.IScope, HistData {}
-    function drawHistogram(hist: HistData, axes: AxesCtrl, svg, xScale, yScale) {
-        var bins = hist.options.bins || 10;
+    class Histogram implements Drawable {
+        // XXX We may need to add functions to change line data if parts of `l` change.
+        constructor(private hist: HistData) { }
 
-        var hdata: D3.Layout.Bin[] = d3.layout.histogram().frequency(false).range(axes.xDomain).bins(xScale.ticks(bins))(hist.data);
+        data: D3.Layout.Bin[]
+        setData(axes: AxesCtrl) {
+            var bins = this.hist.options.bins || 10;
+            this.data = d3.layout.histogram()
+                    .frequency(!!this.hist.options.frequency)
+                    .range(axes.xDomain)
+                    .bins(axes.xScale.ticks(bins))(this.hist.data);
+        }
 
-        var h = svg.append('g')
-        var bar = h.selectAll(".bar")
-            .data(hdata).enter().append("g")
-            .attr("class", "bar")
-            .attr("transform", (d) => {
-                return "translate(" + xScale(d.x) + "," +
-                    yScale(d.y) + ")"
-            });
+        draw(svg, xScale, yScale, axes: AxesCtrl) {
 
-        bar.append("rect").attr("x", 1)
-            .attr("width",(d) => { return xScale(d.x+d.dx)-xScale(d.x); })
-            .attr("height",(d) => { return yScale(0)-yScale(d.y); })
+            this.setData(axes);
 
-        return h;
+            var h: D3.Selection = svg.append('g')
+            var bar = h.selectAll(".bar")
+                .data(this.data).enter().append("g")
+                .attr("class", "bar")
+                .attr("transform", (d) => {
+                    return "translate(" + xScale(d.x) + "," +
+                        yScale(d.y) + ")"
+                });
+
+            bar.append("rect").attr("x", 1)
+                .attr("width",(d) => { return xScale(d.x+d.dx)-xScale(d.x); })
+                .attr("height",(d) => { return yScale(0)-yScale(d.y); })
+
+            return h;
+        }
+        
+        xRange(): [number, number]{
+            // TODO return max and min of this.hist.data
+            return [0,0];
+        }
+        yRange(axes: AxesCtrl): [number, number] {
+            this.setData(axes);
+            // TODO return max value of hist[i].y
+            return [0,0];
+        }
     }
     export function histogramDirective(): ng.IDirective {
         return {
@@ -453,9 +476,8 @@ module ngGraphs {
                 data: '='
             },
             link: function (scope: IHistScope, elm, attrs, axesCtrl: AxesCtrl) {
-                /* The following sets up watches for data, and config
-                 */
-                var index = axesCtrl.addChild(drawHistogram.bind(null, scope, axesCtrl));
+                var histogram = new Histogram(scope);
+                var index = axesCtrl.addChild(histogram.draw.bind(histogram));
                 scope.$watch('options',  () => {
                     axesCtrl.redrawChild(index);
                 }, true);
