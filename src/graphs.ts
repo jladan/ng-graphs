@@ -3,15 +3,26 @@
 
 module ngGraphs {
 
-    type Range =[number, number];
+    export type Range =[number, number];
     type DrawFunction = (svg: D3.Selection, 
                          xScale: D3.Scale.QuantitativeScale,
                          yScale: D3.Scale.QuantitativeScale,
                          axes?: AxesCtrl) => D3.Selection;
 
+    interface Drawable {
+        draw:   DrawFunction;
+        xRange: () => Range;
+        yRange: () => Range;
+    }
+    export interface AxesConfig {
+        xDomain?: Range;
+        yDomain?: Range;
+        xLabel?:  string;
+        yLabel?:  string;
+    }
     interface IAxesScope extends ng.IScope {
         mv: AxesCtrl;
-        options: any;
+        options: AxesConfig;
         // XXX The following need to be in the scope, because they are set/used
         // in the linking function
         width: number;
@@ -225,19 +236,32 @@ module ngGraphs {
         options: any;
     }
     interface ILineScope extends ng.IScope, LineData {}
-    function drawLine(l: LineData, svg, xScale, yScale) {
-        var sw = l.options.strokeWidth || 1;
-        var color = l.options.color || 'black';
-        var start = l.start;
-        var end = l.end;
-        var drawnLine = svg.append("line")
-            .attr("x1", xScale(start[0]))
-            .attr("y1", yScale(start[1]))
-            .attr("x2", xScale(end[0]))
-            .attr("y2", yScale(end[1]))
-            .attr('stroke-width', sw)
-            .attr('stroke', color)
-        return drawnLine;
+    class Line implements Drawable {
+        // XXX We may need to add functions to change line data if parts of `l` change.
+        constructor(private l: LineData) { }
+
+        draw(svg, xScale, yScale) {
+            var l = this.l;
+            var sw = l.options.strokeWidth || 1;
+            var color = l.options.color || 'black';
+            var start = l.start;
+            var end = l.end;
+            var drawnLine = svg.append("line")
+                .attr("x1", xScale(start[0]))
+                .attr("y1", yScale(start[1]))
+                .attr("x2", xScale(end[0]))
+                .attr("y2", yScale(end[1]))
+                .attr('stroke-width', sw)
+                .attr('stroke', color)
+            return drawnLine;
+        }
+        
+        xRange(): [number, number]{
+            return [this.l.start[0], this.l.end[0]];
+        }
+        yRange(): [number, number] {
+            return [this.l.start[1], this.l.end[1]];
+        }
     }
     export function lineDirective(): ng.IDirective {
         return {
@@ -249,37 +273,63 @@ module ngGraphs {
                 options: '=',
             },
             link: function (scope: ILineScope, element, attrs, axesCtrl) {
-                var index = axesCtrl.addChild(drawLine.bind(null, scope));
+                var line = new Line(scope);
+                var index = axesCtrl.addChild(line.draw.bind(line));
+                // XXX Currently, there are no watches to handle changes to scope properties
             }
         };
     }
 
     interface PlotData {
         options: any;
-        data: any;
+        data?: any;
     }
     interface IPlotScope extends ng.IScope, PlotData {}
-    function drawPlot(plot: PlotData, svg, xScale, yScale) {
-        // XXX This ends up repeating the version for the line
-        // except with different defaults
-        var sw = plot.options.strokeWidth || 2;
-        var color = plot.options.color || 'blue';
+    class Plot implements Drawable {
+        // XXX We may need to add functions to change line data if parts of `l` change.
+        constructor(private plot: PlotData) {
+            this.setData();
+        }
 
-        var plotData = plot.data || [];
+        data: Array<[number, number]>;
+        setData(axes?: AxesCtrl) {
+            this.data = this.plot.data || [];
+        }
 
-        // This next bit creates an svg path generator
-        var pathGen = d3.svg.line()
-            .x(function (d) { return xScale(d[0]); })
-            .y(function (d) { return yScale(d[1]); })
-            .interpolate("linear");
+        draw(svg, xScale, yScale, axes) {
+            // XXX This ends up repeating the version for the line
+            // except with different defaults
+            var sw = this.plot.options.strokeWidth || 2;
+            var color = this.plot.options.color || 'blue';
 
-        // Now, the plot is actually added to the svg
-        var path = svg.append("path")
-            .attr("d", pathGen(plotData))
-            .attr("stroke", color)
-            .attr("stroke-width", sw)
-            .attr("fill", "none");
-        return path;
+            // XXX Probably don't need to recalculate data on every draw.
+            // However, this is here to ensure it is actually ready for every draw.
+            // e.g. when the axes are resized
+            this.setData(axes);
+
+            // This next bit creates an svg path generator
+            var pathGen = d3.svg.line()
+                .x(function (d) { return xScale(d[0]); })
+                .y(function (d) { return yScale(d[1]); })
+                .interpolate("linear");
+
+            // Now, the plot is actually added to the svg
+            var path = svg.append("path")
+                .attr("d", pathGen(this.data))
+                .attr("stroke", color)
+                .attr("stroke-width", sw)
+                .attr("fill", "none");
+            return path;
+        }
+        
+        xRange(): [number, number]{
+            // TODO Change to max/min of x-values
+            return [0,0];
+        }
+        yRange(): [number, number] {
+            // TODO Change to max/min of x-values
+            return [0,0];
+        }
     }
     export function plotDirective(): ng.IDirective {
         return {
@@ -291,7 +341,8 @@ module ngGraphs {
                 data: '='
             },
             link: function (scope: IPlotScope, elm, attrs, axesCtrl) {
-                var index = axesCtrl.addChild(drawPlot.bind(null, scope));
+                var plot = new Plot(scope);
+                var index = axesCtrl.addChild(plot.draw.bind(plot));
                 scope.$watch('options',  () => {
                     axesCtrl.redrawChild(index);
                 }, true);
@@ -302,25 +353,44 @@ module ngGraphs {
         };
     }
     
-    interface IFuncScope extends ng.IScope {
-        options: any;
-        f: any;
+    interface FuncData extends PlotData {
+        f: (number) => number;
     }
-    function drawFunction(f: IFuncScope, axes: AxesCtrl, svg, xScale, yScale): void {
-        // TODO Change N based on width of axes
-        var N = 100;
-        var plotData = Array();
-        var i: number;
-        for (i = 0; i <= N; i++) {
-            var x = (axes.xDomain[1]-axes.xDomain[0]) * i / N + axes.xDomain[0];
-            plotData.push([x, f.f(x)]);
+    interface IFuncScope extends FuncData, ng.IScope { }
+    class Func extends Plot {
+        // XXX We may need to add functions to change line data if parts of `l` change.
+        private f: (number) => number;
+        constructor(f: FuncData) {
+            this.f = f.f;
+            super(f);
         }
 
-        var plot: PlotData = {
-            options: f.options,
-            data: plotData,
+        setData(axes?: AxesCtrl) {
+            var domain: Range = [0, 1];
+            var N: number = 100 // number of samples
+            if (axes) {
+                domain = axes.xDomain;
+                var range = axes.xScale.range();
+                N = Math.abs(range[0]-range[1]);
+            }
+            var N = 100;
+            var plotData = Array();
+            var i: number;
+            for (i = 0; i <= N; i++) {
+                var x = (domain[1]-domain[0]) * i / N + domain[0];
+                plotData.push([x, this.f(x)]);
+            }
+            this.data = plotData;
         }
-        return drawPlot(plot, svg, xScale, yScale);
+
+        xRange(): [number, number]{
+            // XXX doesn't make any sense for functions
+            return [0,0];
+        }
+        yRange(): [number, number] {
+            // TODO it's a good idea, but depends on the xDomain of the axes in this case
+            return [0,0];
+        }
     }
     export function functionDirective(): ng.IDirective {
         return {
@@ -332,9 +402,8 @@ module ngGraphs {
                 f: '='
             },
             link: function (scope: IFuncScope, elm, attrs, axesCtrl: AxesCtrl) {
-                /* The following sets up watches for data, and config
-                 */
-                var index = axesCtrl.addChild(drawFunction.bind(null, scope, axesCtrl));
+                var func = new Func(scope);
+                var index = axesCtrl.addChild(func.draw.bind(func));
                 scope.$watch('options',  () => {
                     axesCtrl.redrawChild(index);
                 }, true);
@@ -345,6 +414,10 @@ module ngGraphs {
         };
     }
 
+    export interface HistConfig {
+        bins?:      number;
+        frequency?: boolean;
+    }
     interface HistData {
         options: any;
         data: any;
