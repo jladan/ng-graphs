@@ -67,6 +67,7 @@ module ngGraphs {
             var h = $scope.height - (p[0]+p[2]);
 
             // Set up the scales
+            // TODO determine yDomain and xDomain from children if they are not defined
             this.xScale = d3.scale.linear()
                 .domain(this.xDomain).range([p[3], w + p[3]]);
             this.yScale = d3.scale.linear()
@@ -125,30 +126,39 @@ module ngGraphs {
 
         }
 
+        private unionRange(r1: Range, r2: Range) {
+            if (r1[0] == r1[1]) 
+                return r2;
+            else if (r2[0] == r2[1]) 
+                return r1;
+            else 
+                return [ Math.min(r1[0], r2[0]), Math.max(r1[1], r2[1]) ];
+        }
+
         /** Sets the options for the plot, such as axis locations, range, etc...
          */
         private setOptions(opts) {
             this.padding = [30,30,30,30] // top right bottom left
             if (opts) {
-                this.xDomain = opts.xDomain || [-1, 1];
-                this.yDomain = opts.yDomain || [-1, 1];
+                this.xDomain = opts.xDomain;
+                this.yDomain = opts.yDomain;
                 this.xLabel = opts.xLabel || "";
                 this.yLabel = opts.yLabel || "";
             }
             else {
-                this.xDomain = [-1, 1];
-                this.yDomain = [-1, 1];
+                this.xDomain;
+                this.yDomain;
                 this.xLabel = "";
                 this.yLabel = "";
             }
         }
 
         // Bits that handle all of the children of the plot
-        children: DrawFunction[] = [];
+        children: Drawable[] = [];
         drawnElements: D3.Selection[] = [];
         
-        addChild(drawFunction: DrawFunction) {
-            return this.children.push(drawFunction) -1;
+        addChild(element: Drawable) {
+            return this.children.push(element) -1;
         }
         rmChild(index) {
             // XXX if we remove the child, we probably also want to undraw it
@@ -159,7 +169,7 @@ module ngGraphs {
         drawChild(index) {
             this.undrawChild(index);
             this.drawnElements[index] = 
-                    this.children[index](this.drawingRegion, this.xScale, this.yScale, this);
+                    this.children[index].draw(this.drawingRegion, this.xScale, this.yScale, this);
         }
         
         reorderElements() {
@@ -274,7 +284,7 @@ module ngGraphs {
             },
             link: function (scope: ILineScope, element, attrs, axesCtrl) {
                 var line = new Line(scope);
-                var index = axesCtrl.addChild(line.draw.bind(line));
+                var index = axesCtrl.addChild(line);
                 // XXX Currently, there are no watches to handle changes to scope properties
             }
         };
@@ -342,7 +352,7 @@ module ngGraphs {
             },
             link: function (scope: IPlotScope, elm, attrs, axesCtrl) {
                 var plot = new Plot(scope);
-                var index = axesCtrl.addChild(plot.draw.bind(plot));
+                var index = axesCtrl.addChild(plot);
                 scope.$watch('options',  () => {
                     axesCtrl.redrawChild(index);
                 }, true);
@@ -403,7 +413,7 @@ module ngGraphs {
             },
             link: function (scope: IFuncScope, elm, attrs, axesCtrl: AxesCtrl) {
                 var func = new Func(scope);
-                var index = axesCtrl.addChild(func.draw.bind(func));
+                var index = axesCtrl.addChild(func);
                 scope.$watch('options',  () => {
                     axesCtrl.redrawChild(index);
                 }, true);
@@ -477,7 +487,7 @@ module ngGraphs {
             },
             link: function (scope: IHistScope, elm, attrs, axesCtrl: AxesCtrl) {
                 var histogram = new Histogram(scope);
-                var index = axesCtrl.addChild(histogram.draw.bind(histogram));
+                var index = axesCtrl.addChild(histogram);
                 scope.$watch('options',  () => {
                     axesCtrl.redrawChild(index);
                 }, true);
