@@ -46,7 +46,7 @@ module ngGraphs {
             $scope.render = this.render.bind(this);
 
             // Update the appearance when the config changes
-            $scope.$watch('config', $scope.render);
+            $scope.$watch('options', $scope.render, true);
 
             /* We create an apply function (so it can be removed),
              * and force an $apply on resize events, triggering 
