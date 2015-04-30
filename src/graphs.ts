@@ -422,9 +422,9 @@ module ngGraphs {
             if (axes) {
                 domain = axes.xDomain;
                 var range = axes.xScale.range();
+                // XXX One point per pixel is plenty
                 N = Math.abs(range[0]-range[1]);
             }
-            var N = 100;
             var plotData = Array();
             var i: number;
             for (i = 0; i <= N; i++) {
