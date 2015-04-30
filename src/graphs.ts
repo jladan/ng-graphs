@@ -65,7 +65,6 @@ module ngGraphs {
             $scope.svg.selectAll('*').remove();
 
             // Set up the scales
-            // TODO determine yDomain and xDomain from children if they are not defined
             this.setScales();
 
             this.drawAxes();
@@ -373,13 +372,14 @@ module ngGraphs {
             return path;
         }
         
-        xRange(): [number, number]{
-            // TODO Change to max/min of x-values
-            return [0,0];
+        xRange(): Range {
+            // TODO re-think when all of this data is being set
+            this.setData();
+            return [d3.min(this.data, (d) => {return d[0]}), d3.max(this.data, (d) => {return d[0];})];
         }
-        yRange(): [number, number] {
-            // TODO Change to max/min of x-values
-            return [0,0];
+        yRange(axes?: AxesCtrl): Range {
+            this.setData();
+            return [d3.min(this.data, (d) => {return d[1]}), d3.max(this.data, (d) => {return d[1];})];
         }
     }
     export function plotDirective(): ng.IDirective {
@@ -434,13 +434,13 @@ module ngGraphs {
             this.data = plotData;
         }
 
-        xRange(): [number, number]{
+        xRange(): Range {
             // XXX doesn't make any sense for functions
             return [0,0];
         }
-        yRange(): [number, number] {
-            // TODO it's a good idea, but depends on the xDomain of the axes in this case
-            return [0,0];
+        yRange(axes: AxesCtrl): Range {
+            this.setData(axes);
+            return [d3.min(this.data, (d) => {return d[1]}), d3.max(this.data, (d) => {return d[1];})];
         }
     }
     export function functionDirective(): ng.IDirective {

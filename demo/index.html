@@ -37,8 +37,21 @@
 </p>
 <div axes options="{xDomain: [-6,6], yDomain: [0,0]}" style="height:400px;">
     <histogram data='histData' options="{bins: 100, frequency: true}"></histogram>
+    <function f="sine" options="{}"></plot>
 </div>
 
+<h2>This next one tests auto-sizing of plots</h2>
+<p>Width and height are entirely determined by the [x,y] data</p>
+<div axes options="{}" style="height:400px;">
+    <plot data="data" options="{strokeWidth:4, color:'magenta'}"></plot>
+</div>
+
+<h2>Now function</h2>
+<p>The width here is actually created by the line</p>
+<div axes options="{}" style="height:400px;">
+    <line start="[-20,0]" end="[20,0]" options="{strokeWidth:1, color: 'black'}">
+    <function f="sine" options="{}"></plot>
+</div>
 
 </body>
 </html>
