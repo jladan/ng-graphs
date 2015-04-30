@@ -35,7 +35,8 @@ module ngGraphs {
         xDomain: Range;
         yDomain: Range;
         xScale: D3.Scale.LinearScale;
-        yScale: D3.Scale.LinearScale;
+        yScale: D3.Scale.LinearScale; 
+        autoScale: boolean = false;
         padding: number[];
         xLabel: string;
         yLabel: string;
@@ -62,19 +63,65 @@ module ngGraphs {
             var $scope = this.$scope;
             this.setOptions(this.$scope.options);
             $scope.svg.selectAll('*').remove();
-            var p = this.padding;
-            var w = $scope.width - (p[1]+p[3]);
-            var h = $scope.height - (p[0]+p[2]);
 
             // Set up the scales
             // TODO determine yDomain and xDomain from children if they are not defined
-            this.xScale = d3.scale.linear()
-                .domain(this.xDomain).range([p[3], w + p[3]]);
-            this.yScale = d3.scale.linear()
-                .domain(this.yDomain).range([h + p[0], p[0]]);
+            this.setScales();
 
             this.drawAxes();
             this.drawChildren();
+        }
+
+        /** Set the scales of the plot
+         * if the xDomain or yDomain options are set, use them
+         * otherwise, determine the values from all the children
+         *
+         * The xDomain is calculated first, because the yDomain depends on it
+         * for most drawable elements.
+         */
+        private setScales() {
+            // create the actual scales based on the SVG geometry.
+            var p = this.padding;
+            var w = this.$scope.width - (p[1]+p[3]);
+            var h = this.$scope.height - (p[0]+p[2]);
+
+            this.autoScale = false;
+            // Create the xScale
+            if ( !this.xDomain || this.xDomain[0] == this.xDomain[1] ) {
+                this.autoScale = true;
+                this.xDomain = [0, 0];
+                for (var i in this.children) {
+                    this.xDomain = this.unionRange(this.xDomain, this.children[i].xRange());
+                }
+            }
+            // XXX xScale is needed to calculate the yScale for histograms
+            // TODO add options for different scales.
+            this.xScale = d3.scale.linear()
+                .domain(this.xDomain).range([p[3], w + p[3]]);
+
+            // Create the yScale
+            if ( !this.yDomain || this.yDomain[0] == this.yDomain[1] ) {
+                this.autoScale = true;
+                this.yDomain = [0, 0];
+                for (var i in this.children) {
+                    // Because the yDomain may depend on the xScale (in histogram), we supply the axes here
+                    this.yDomain = this.unionRange(this.yDomain, this.children[i].yRange(this));
+                }
+            }
+            this.yScale = d3.scale.linear()
+                .domain(this.yDomain).range([h + p[0], p[0]]);
+        }
+
+        /** Helper function to get the minimal covering range of two ranges
+         *  intervals with same left and right coordinate are considered empty
+         */
+        private unionRange(r1: Range, r2: Range): Range {
+            if (r1[0] == r1[1]) 
+                return r2;
+            else if (r2[0] == r2[1]) 
+                return r1;
+            else 
+                return [ Math.min(r1[0], r2[0]), Math.max(r1[1], r2[1]) ];
         }
 
 
@@ -124,15 +171,6 @@ module ngGraphs {
             this.drawingRegion = $scope.svg.append("g")
                 .attr("clip-path", "url(#plotArea)")
 
-        }
-
-        private unionRange(r1: Range, r2: Range) {
-            if (r1[0] == r1[1]) 
-                return r2;
-            else if (r2[0] == r2[1]) 
-                return r1;
-            else 
-                return [ Math.min(r1[0], r2[0]), Math.max(r1[1], r2[1]) ];
         }
 
         /** Sets the options for the plot, such as axis locations, range, etc...
@@ -185,8 +223,12 @@ module ngGraphs {
         }
 
         redrawChild(index) {
-            this.drawChild(index);
-            this.reorderElements();
+            if (this.autoScale)
+                this.render();
+            else {
+                this.drawChild(index);
+                this.reorderElements();
+            }
         }
 
         drawChildren() {
@@ -296,7 +338,6 @@ module ngGraphs {
     }
     interface IPlotScope extends ng.IScope, PlotData {}
     class Plot implements Drawable {
-        // XXX We may need to add functions to change line data if parts of `l` change.
         constructor(private plot: PlotData) {
             this.setData();
         }
@@ -417,9 +458,9 @@ module ngGraphs {
                 scope.$watch('options',  () => {
                     axesCtrl.redrawChild(index);
                 }, true);
-                scope.$watch('data', () => {
+                scope.$watch('f', () => {
                     axesCtrl.redrawChild(index);
-                });
+                }, true);
             },
         };
     }
@@ -434,7 +475,6 @@ module ngGraphs {
     }
     interface IHistScope extends ng.IScope, HistData {}
     class Histogram implements Drawable {
-        // XXX We may need to add functions to change line data if parts of `l` change.
         constructor(private hist: HistData) { }
 
         data: D3.Layout.Bin[]
@@ -473,7 +513,7 @@ module ngGraphs {
         yRange(axes: AxesCtrl): [number, number] {
             this.setData(axes);
             // TODO return max value of hist[i].y
-            return [0,0];
+            return [0, d3.max(this.data, (d) => {return d.y;})];
         }
     }
     export function histogramDirective(): ng.IDirective {
