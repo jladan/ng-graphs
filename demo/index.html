@@ -29,15 +29,21 @@
     <histogram data='histData' options="histConfig"></histogram>
     <plot data="data" options="{strokeWidth:4, color:'magenta'}"></plot>
     <function f="sine" options="{strokeWidth:2, color:'blue'}"></function>
+    <function f="exponent" options="{strokeWidth:2, color:'green'}"></function>
+    <function f="gaussian" options="{strokeWidth:2, color:'aquamarine'}"></function>
     <line start="[-6,0]" end="[6,0]" options="{strokeWidth:1, color:'black'}"></line>
     <line start="[-10,-2]" end="[10,2]" options="{strokeWidth:2, color:'red'}"></line>
 </div>
 
-<h2>We can draw the histogram elsewhere, with different options too.
+<h2>We can draw the histogram elsewhere, with different options too.</h2>
+<p>
+<input ng-model="xType" />
+<input ng-model="yType" />
 </p>
-<div axes options="{xDomain: [-6,6], yDomain: [0,0]}" style="height:400px;">
+<div axes options="{xDomain: [-6,6], xScale:xType, yScale:yType}" style="height:400px;">
     <histogram data='histData' options="{bins: 100, frequency: true}"></histogram>
-    <function f="sine" options="{}"></plot>
+    <function f="gaussian" options="{strokeWidth:20, color:'aquamarine'}"></function>
+    <function f="sine" options="{strokeWidth:2, color:'red'}"></function>
 </div>
 
 <h2>This next one tests auto-sizing of plots</h2>

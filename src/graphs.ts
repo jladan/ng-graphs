@@ -36,6 +36,8 @@ module ngGraphs {
         yDomain: Range;
         xScale: D3.Scale.LinearScale;
         yScale: D3.Scale.LinearScale; 
+        xScaleType: string;
+        yScaleType: string;
         autoScale: boolean = false;
         padding: number[];
         xLabel: string;
@@ -84,6 +86,7 @@ module ngGraphs {
             var w = this.$scope.width - (p[1]+p[3]);
             var h = this.$scope.height - (p[0]+p[2]);
 
+            // XXX autoScale is used to decide whether to re-render the whole thing when a child updates
             this.autoScale = false;
             // Create the xScale
             if ( !this.xDomain || this.xDomain[0] == this.xDomain[1] ) {
@@ -94,9 +97,22 @@ module ngGraphs {
                 }
             }
             // XXX xScale is needed to calculate the yScale for histograms
-            // TODO add options for different scales.
-            this.xScale = d3.scale.linear()
-                .domain(this.xDomain).range([p[3], w + p[3]]);
+            switch (this.xScaleType) {
+                case "log":
+                    if (this.xDomain[0] <= 0) {
+                        console.warn("xDomain cannot contain any negative numbers for a log-plot")
+                        // XXX To even draw something, it must be positive
+                        this.xDomain[0] = .000001;
+                        if (this.xDomain[1] < this.xDomain[0])
+                            this.xDomain[1] = 1;
+                    }
+                    this.xScale = d3.scale.log();
+                    break;
+                case "linear":
+                default:
+                    this.xScale = d3.scale.linear();
+            }
+            this.xScale.domain(this.xDomain).range([p[3], w + p[3]]);
 
             // Create the yScale
             if ( !this.yDomain || this.yDomain[0] == this.yDomain[1] ) {
@@ -107,8 +123,23 @@ module ngGraphs {
                     this.yDomain = this.unionRange(this.yDomain, this.children[i].yRange(this));
                 }
             }
-            this.yScale = d3.scale.linear()
-                .domain(this.yDomain).range([h + p[0], p[0]]);
+            switch (this.yScaleType) {
+                case "log":
+                    if (this.yDomain[0] <= 0) {
+                        console.warn("yDomain cannot contain any negative numbers for a log-plot")
+                        // XXX To even draw something, it must be positive
+                        this.yDomain[0] = .000001;
+                        if (this.yDomain[1] < this.yDomain[0])
+                            this.yDomain[1] = 1;
+                    }
+                    this.yScale = d3.scale.log();
+                    break;
+                case "linear":
+                default:
+                    this.yScale = d3.scale.linear();
+            }
+            this.yScale.domain(this.yDomain).range([h + p[0], p[0]]);
+
         }
 
         /** Helper function to get the minimal covering range of two ranges
@@ -175,18 +206,23 @@ module ngGraphs {
         /** Sets the options for the plot, such as axis locations, range, etc...
          */
         private setOptions(opts) {
+            // TODO: make padding into a real option
             this.padding = [30,30,30,30] // top right bottom left
             if (opts) {
                 this.xDomain = opts.xDomain;
                 this.yDomain = opts.yDomain;
                 this.xLabel = opts.xLabel || "";
                 this.yLabel = opts.yLabel || "";
+                this.xScaleType = opts.xScale || "linear";
+                this.yScaleType = opts.yScale || "linear";
             }
             else {
                 this.xDomain;
                 this.yDomain;
                 this.xLabel = "";
                 this.yLabel = "";
+                this.xScaleType = "linear";
+                this.yScaleType = "linear";
             }
         }
 
@@ -496,12 +532,17 @@ module ngGraphs {
                 .attr("class", "bar")
                 .attr("transform", (d) => {
                     return "translate(" + xScale(d.x) + "," +
-                        yScale(d.y) + ")"
+                        (yScale(d.y) || yScale(yScale.domain()[0])) + ")"
                 });
 
             bar.append("rect").attr("x", 1)
                 .attr("width",(d) => { return xScale(d.x+d.dx)-xScale(d.x); })
-                .attr("height",(d) => { return yScale(0)-yScale(d.y); })
+                .attr("height",(d) => { 
+                    // Because of log scales, we do fancy crap to guarantee no NaN values
+                    var y0 = yScale(Math.max(yScale.domain()[0], 0)); 
+                    var t = y0 - ( yScale(d.y) || y0 ); 
+                    return t;
+                })
 
             return h;
         }

@@ -14,6 +14,8 @@ interface IDataScope extends ng.IScope {
     N: number;
 
     sine: (number) => number;
+    exponent: (number) => number;
+    gaussian: (number) => number;
 }
 class DataCtrl {
     constructor(private $scope: IDataScope) {
@@ -41,6 +43,8 @@ class DataCtrl {
         };
 
         $scope.sine = Math.sin;
+        $scope.exponent = Math.exp;
+        $scope.gaussian = function(x) { return Math.exp(-x*x); };
         $scope.chooseSine();
 
         $scope.axesConfig = {
