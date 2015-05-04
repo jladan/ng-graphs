@@ -1,3 +1,38 @@
 .axis path, 
 .axis line {fill:none; stroke:black; shape-rendering: crispEdges;}
 .axis text {font-family: sans-serif; font-size: 11px;}
+
+
+/* it is important to select :not([attr]), because css will override svg properties */
+
+div[axes] .plot {
+    stroke-width: 2;
+}
+div[axes] .plot:nth-of-type(7n+1) {
+    stroke: blue;
+}
+div[axes] .plot:nth-of-type(7n+2) {
+    stroke: green;
+}
+div[axes] .plot:nth-of-type(7n+3) {
+    stroke: red;
+}
+div[axes] .plot:nth-of-type(7n+4) {
+    stroke: aqua;
+}
+div[axes] .plot:nth-of-type(7n+5) {
+    stroke: magenta;
+}
+div[axes] .plot:nth-of-type(7n+6) {
+    stroke: yellow;
+}
+div[axes] .plot:nth-of-type(7n+7) {
+    stroke: grey;
+}
+
+div[axes] .line {
+    stroke: black;
+}
+div[axes] .line {
+    stroke-width: 1;
+}
