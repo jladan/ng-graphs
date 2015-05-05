@@ -3,8 +3,12 @@
 .axis text {font-family: sans-serif; font-size: 11px;}
 
 
-/* it is important to select :not([attr]), because css will override svg properties */
 
+/* The for plot and function directives (example of cyclic colours)
+ *
+ * The hierarchy to reach a standard plot is:
+ *      div[axes] > svg > g[clip-path] > path.plot
+ */
 div[axes] .plot {
     stroke-width: 2;
 }
@@ -30,9 +34,55 @@ div[axes] .plot:nth-of-type(7n+7) {
     stroke: grey;
 }
 
+/* Line-related theme
+ *
+ * The hierarchy to reach a standard line is:
+ *      div[axes] > svg > g[clip-path] > line.line
+ */
 div[axes] .line {
     stroke: black;
 }
 div[axes] .line {
     stroke-width: 1;
+}
+
+/* Histogram theme settings
+ *
+ * The hierarchy of a standard histogram is:
+ *      div[axes] > svg > g[clip-path] > g.histogram > g.bar > rect
+ * 
+ * Eventually, g.bar may contain other decorators, like text labels (with the value)
+ */
+div[axes] .histogram rect {
+    stroke:white; 
+    fill:blue;
+}
+
+
+/* an all black theme (for boringness sake)
+ *
+ * This theme also demonstrates different stroke types (dash and dot)
+ */
+div[axes].all-black .plot {
+    stroke-width: 2;
+    stroke: black;
+}
+div[axes].all-black .plot:nth-of-type(4n+2) {
+    stroke-dasharray: 5;
+}
+div[axes].all-black .plot:nth-of-type(4n+3) {
+    stroke-dasharray: 2, 5;
+}
+div[axes].all-black .plot:nth-of-type(4n+4) {
+    stroke-dasharray: 15,5,2,5;
+}
+
+div[axes].all-black .line {
+    stroke: black;
+    stroke-width: 1;
+}
+
+div[axes].all-black .histogram rect {
+    stroke:white; 
+    fill:black;
 }
