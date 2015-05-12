@@ -95,6 +95,8 @@ module ngGraphs {
                 for (var i in this.children) {
                     this.xDomain = this.unionRange(this.xDomain, this.children[i].xRange());
                 }
+                if (this.xDomain[0] == this.xDomain[1])
+                    this.xDomain = [0,1];
             }
             // XXX xScale is needed to calculate the yScale for histograms
             switch (this.xScaleType) {
@@ -122,6 +124,8 @@ module ngGraphs {
                     // Because the yDomain may depend on the xScale (in histogram), we supply the axes here
                     this.yDomain = this.unionRange(this.yDomain, this.children[i].yRange(this));
                 }
+                if (this.yDomain[0] == this.yDomain[1])
+                    this.yDomain = [0,1];
             }
             switch (this.yScaleType) {
                 case "log":
