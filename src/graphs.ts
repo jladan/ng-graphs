@@ -206,24 +206,19 @@ module ngGraphs {
         /** Sets the options for the plot, such as axis locations, range, etc...
          */
         private setOptions(opts) {
-            // TODO: make padding into a real option
-            this.padding = [30,30,30,30] // top right bottom left
             if (opts) {
                 this.xDomain = opts.xDomain;
                 this.yDomain = opts.yDomain;
-                this.xLabel = opts.xLabel || "";
-                this.yLabel = opts.yLabel || "";
-                this.xScaleType = opts.xScale || "linear";
-                this.yScaleType = opts.yScale || "linear";
+                this.xLabel = opts.xLabel;
+                this.yLabel = opts.yLabel;
+                this.xScaleType = opts.xScale;
+                this.yScaleType = opts.yScale;
+                this.padding = opts.padding;
             }
-            else {
-                this.xDomain;
-                this.yDomain;
-                this.xLabel = "";
-                this.yLabel = "";
-                this.xScaleType = "linear";
-                this.yScaleType = "linear";
-            }
+            // Use default values for options that cannot be undefined
+            this.xLabel = "";
+            this.yLabel = "";
+            this.padding = [30,30,30,30] // top right bottom left
         }
 
         // Bits that handle all of the children of the plot
