@@ -319,7 +319,7 @@ module ngGraphs {
     interface LineData {
         start:   [number, number];
         end:     [number, number];
-        options: any;
+        options?: any;
     }
     interface ILineScope extends ng.IScope, LineData {}
     class Line implements Drawable {
@@ -328,8 +328,10 @@ module ngGraphs {
 
         draw(svg, xScale, yScale) {
             var l = this.l;
-            var sw = l.options.strokeWidth;
-            var color = l.options.color;
+            if (l.options) {
+                var sw = l.options.strokeWidth;
+                var color = l.options.color;
+            }
             var start = l.start;
             var end = l.end;
             var drawnLine = svg.append("line")
@@ -387,8 +389,10 @@ module ngGraphs {
         draw(svg, xScale, yScale, axes) {
             // XXX This ends up repeating the version for the line
             // except with different defaults
-            var sw = this.plot.options.strokeWidth;
-            var color = this.plot.options.color;
+            if (this.plot.options) {
+                var sw = this.plot.options.strokeWidth;
+                var color = this.plot.options.color;
+            }
 
             // XXX Probably don't need to recalculate data on every draw.
             // However, this is here to ensure it is actually ready for every draw.
@@ -521,9 +525,13 @@ module ngGraphs {
 
         data: D3.Layout.Bin[]
         setData(axes: AxesCtrl) {
-            var bins = this.hist.options.bins || 10;
+            if (this.hist.options) {
+                var bins = this.hist.options.bins;
+                var freq = this.hist.options.frequency;
+            }
+            bins = bins || 10;
             this.data = d3.layout.histogram()
-                    .frequency(!!this.hist.options.frequency)
+                    .frequency(!!freq)
                     .range(axes.xDomain)
                     .bins(axes.xScale.ticks(bins))(this.hist.data);
         }

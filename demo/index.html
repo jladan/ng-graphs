@@ -23,13 +23,13 @@
 <button ng-click="mv.moreDist(N)">More</button>
 </p>
 <div axes options="axesConfig" style="height:400px;">
-    <histogram data='histData' options="histConfig"></histogram>
-    <plot data="data" options="{}"></plot>
-    <function f="sine" options="{}"></function>
-    <function f="exponent" options="{}"></function>
-    <function f="gaussian" options="{}"></function>
+    <histogram data='histData'></histogram>
+    <plot data="data" ></plot>
+    <function f="sine" ></function>
+    <function f="exponent" ></function>
+    <function f="gaussian" ></function>
     <line start="[-6,0]" end="[6,0]" options="{strokeWidth:1, color:'black'}"></line>
-    <line start="[-10,-2]" end="[10,2]" options="{strokeWidth:2, color:'red'}"></line>
+    <line start="[-10,-2]" end="[10,2]"></line>
 </div>
 
 <h2>We can draw the histogram elsewhere, with different options too.</h2>
@@ -45,7 +45,7 @@
 
 <h2>This next one tests auto-sizing of plots</h2>
 <p>Width and height are entirely determined by the [x,y] data</p>
-<div axes options="{}" style="height:400px;">
+<div axes style="height:400px;">
     <plot data="data" options="{strokeWidth:4, color:'magenta'}"></plot>
 </div>
 
@@ -59,7 +59,7 @@
 <h2>Fallback axes</h2>
 <p>If no valid xDomain (or yDomain) can be determined, then use [0,1]</p>
 <div axes style="height:400px;">
-    <function f="gaussian" options="{}"></plot>
+    <function f="gaussian" ></plot>
 </div>
 
 
