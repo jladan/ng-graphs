@@ -458,8 +458,8 @@ module ngGraphs {
         // XXX We may need to add functions to change line data if parts of `l` change.
         private f: (number) => number;
         constructor(f: FuncData) {
-            this.f = f.f;
             super(f);
+            this.f = f.f;
         }
 
         setData(axes?: AxesCtrl) {

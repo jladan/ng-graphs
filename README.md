@@ -21,7 +21,7 @@ The built library (and typescript declarations) are available [on github](https:
 
 No, we're not registered in the bower repository yet. The `d3.js` and `angular.js` scripts need to be included on the page before `graphs.js`. They are available through bower, npm, source, and on content delivery networks (CDN).
 
-Then, you're ready to use it in the page. All directives are in the `ngGraphs`, which should be included in your angular app. All plots go on a set of axes. The `axes` directive controls the scales and renders the horizontal and vertical axes. A typical set up looks like,
+Then, you're ready to use it in the page. All directives are in the `ngGraphs` module, which should be included in your angular app. All plots go on a set of axes. The `axes` directive controls the scales and renders the horizontal and vertical axes. A typical set up looks like,
 
     <axes options="axesOptions>
         <plot data="data" options="plotOptions"></plot>
@@ -57,8 +57,8 @@ Building the Library
 
 The built library is available as mentioned above in 'How to use'. However, if you're making changes, the library can be built with the commands
 
-    tsd update
-    tsc @libflags
+    tsd install
+    tsc
 
 The first command installs the type declarations for Angular and D3, so is only needed once. The demo/test page is built with
 

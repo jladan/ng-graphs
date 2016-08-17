@@ -1,13 +1,10 @@
 {
     "compilerOptions": {
-        "module": "commonjs",
-        "declaration": true,
         "target": "es5",
         "noImplicitAny": false,
-        "outDir": "build",
         "sourceMap": false
     },
     "files": [
-        "src/graphs.ts"
+        "axesApp.ts"
     ]
 }
