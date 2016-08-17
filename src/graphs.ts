@@ -378,8 +378,11 @@ module ngGraphs {
     interface IPlotScope extends ng.IScope, PlotData {}
     class Plot implements Drawable {
         constructor(private plot: PlotData) {
+            this.initProps(plot);
             this.setData();
         }
+
+        initProps(plot: PlotData) {};
 
         data: Array<[number, number]>;
         setData(axes?: AxesCtrl) {
@@ -459,6 +462,10 @@ module ngGraphs {
         private f: (number) => number;
         constructor(f: FuncData) {
             super(f);
+            this.f = f.f;
+        }
+
+        initProps(f : FuncData) {
             this.f = f.f;
         }
 
